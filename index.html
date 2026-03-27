@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İddaa Analiz Pro v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#06090f;--bg2:#0c1220;--bg3:#131c30;--bg4:#1a2540;--border:#1e2d4d;--text:#e4eaf5;--text2:#8899bb;--text3:#546380;--blue:#4d8df7;--green:#12c48e;--red:#f04858;--amber:#f5a623;--purple:#9b6dff;--cyan:#22d3ee;--glass:rgba(12,18,32,.8)}
+[data-theme="light"]{--bg:#f0f2f7;--bg2:#fff;--bg3:#fff;--bg4:#e8ecf4;--border:#d4dae8;--text:#1a2236;--text2:#5a6580;--text3:#8a94a8;--glass:rgba(255,255,255,.9)}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;padding-bottom:80px}
+a{color:var(--blue);text-decoration:none}
+
+/* ===== LAYOUT ===== */
+.app{max-width:1400px;margin:0 auto;position:relative;z-index:1}
+.status-bar{background:var(--bg3);border-bottom:1px solid var(--border);padding:5px 24px;display:flex;align-items:center;gap:14px;font-size:10px;color:var(--text3);overflow-x:auto;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot.on{background:var(--green);box-shadow:0 0 6px var(--green)}.dot.off{background:var(--red)}.dot.ld{background:var(--amber);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+.hdr{padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);background:var(--glass);backdrop-filter:blur(16px);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ic{width:34px;height:34px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:8px;display:grid;place-items:center;font-size:18px}
+.logo-t{font-weight:800;font-size:16px;background:linear-gradient(135deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-s{font-size:8px;color:var(--text3);font-weight:600;letter-spacing:2px;text-transform:uppercase}
+.tabs{display:flex;gap:2px;background:var(--bg4);border-radius:8px;padding:2px}
+.tab{padding:6px 14px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:none;background:0;color:var(--text2);font-family:inherit;transition:.2s}
+.tab.on{background:var(--blue);color:#fff}
+.theme-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:14px;cursor:pointer;display:grid;place-items:center}
+.mn{padding:20px 24px}.sec{display:none}.sec.on{display:block}
+.cd{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+.cd-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.cd-t i{width:3px;height:14px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:2px;display:inline-block}
+
+/* ===== FORMS ===== */
+select,input{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--text);font-family:inherit;font-size:12px;outline:0}
+select:focus,input:focus{border-color:var(--blue)}
+.fg{display:flex;flex-direction:column;gap:3px}.fl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase}
+.filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:end}
+.btn{padding:7px 16px;border-radius:7px;font-weight:700;font-size:11px;cursor:pointer;border:none;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+.btn:active{transform:scale(.97)}
+.b1{background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff}.b2{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.bg{background:linear-gradient(135deg,var(--green),var(--cyan));color:#fff}.br{background:var(--red);color:#fff}.ba{background:linear-gradient(135deg,var(--amber),#f472b6);color:#fff}
+
+/* ===== RISK ===== */
+.rdot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.rdot.r1{background:#12c48e}.rdot.r2{background:#86d67a}.rdot.r3{background:#f5a623}.rdot.r4{background:#f07848}.rdot.r5{background:#f04858}
+.rbadge{font-size:8px;font-weight:700;padding:1px 6px;border-radius:5px;display:inline-flex;align-items:center;gap:3px}
+.rbadge.safe{background:rgba(18,196,142,.1);color:#12c48e}.rbadge.mod{background:rgba(245,166,35,.1);color:#f5a623}.rbadge.risk{background:rgba(240,72,88,.1);color:#f04858}
+.anom{font-size:7px;font-weight:700;padding:1px 4px;border-radius:3px;background:rgba(240,72,88,.1);color:var(--red);margin-left:3px}
+
+/* ===== MATCH LIST ===== */
+.lhdr{font-size:10px;font-weight:700;color:var(--text3);padding:6px 2px;display:flex;align-items:center;gap:5px;border-bottom:1px solid var(--border);margin:10px 0 4px}
+.lhdr:first-child{margin-top:0}
+.lhdr .rbadge{margin-left:auto}
+.mi{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 12px;display:grid;grid-template-columns:minmax(160px,1fr) 40px 40px repeat(3,48px) 20px 24px;align-items:center;gap:6px;margin-bottom:3px;font-size:11px;transition:.15s}
+.mi:hover{border-color:rgba(77,141,247,.3)}
+.mi.live{border-left:3px solid var(--red)}
+.mi.hassel{background:rgba(77,141,247,.05);border-color:rgba(77,141,247,.3)}
+.mi.rhi{border-right:3px solid var(--red)}.mi.rmd{border-right:3px solid var(--amber)}.mi.rlo{border-right:3px solid var(--green)}
+.mi-tm{font-weight:600;font-size:11px;line-height:1.3}.mi-tm small{display:block;font-size:8px;color:var(--text3);margin-top:1px}
+.mi-t{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);font-weight:600;text-align:center}
+.mi-s{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;text-align:center;color:var(--amber)}
+.odd{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-align:center;padding:4px 2px;border-radius:5px;background:var(--bg3);cursor:pointer;transition:.12s;border:1.5px solid transparent;position:relative;user-select:none}
+.odd:hover{border-color:var(--blue);transform:scale(1.04)}
+.odd.h{color:var(--blue)}.odd.d{color:var(--amber)}.odd.a{color:var(--red)}
+.odd.ticked{background:var(--blue)!important;color:#fff!important;border-color:var(--blue);box-shadow:0 0 0 2px rgba(77,141,247,.2)}
+.mi-x{font-size:13px;text-align:center;cursor:pointer;color:var(--text3);transition:.15s;line-height:1}
+.mi-x:hover{color:var(--blue)}
+.badge{display:inline-flex;padding:1px 5px;border-radius:6px;font-size:7px;font-weight:700}
+.badge.lv{background:rgba(240,72,88,.15);color:var(--red);animation:blink 1.5s infinite}.badge.dn{background:rgba(84,99,128,.15);color:var(--text3)}
+.incpn{font-size:7px;color:var(--green);font-weight:700;margin-left:3px}
+
+/* ===== SELECTION BAR ===== */
+.selbar{position:fixed;bottom:0;left:0;right:0;background:var(--bg3);border-top:2px solid var(--blue);padding:10px 20px;display:none;align-items:center;justify-content:center;gap:10px;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.3);backdrop-filter:blur(12px);flex-wrap:wrap}
+.selbar.show{display:flex}
+.selbar .cnt{background:var(--blue);color:#fff;padding:1px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px}
+.selbar .todd{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:var(--green)}
+
+/* ===== COUPON PANEL ===== */
+.cpn-float{position:fixed;bottom:60px;right:16px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.cpn-btn{background:linear-gradient(135deg,var(--green),var(--cyan));color:#fff;padding:8px 16px;border-radius:10px;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 4px 16px rgba(18,196,142,.3);display:flex;align-items:center;gap:6px;border:none;font-family:inherit}
+.cpn-panel{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:16px;width:340px;max-height:440px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3);display:none}
+.cpn-panel.open{display:block}
+.ci{display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px;gap:6px}
+.ci:last-child{border:none}
+.ci-info{flex:1}.ci-tm{font-weight:600;font-size:10px}.ci-pk{font-size:9px;color:var(--text2)}
+.ci-odd{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--green);font-size:12px}
+.ci-rm{cursor:pointer;color:var(--text3);font-size:13px}.ci-rm:hover{color:var(--red)}
+.cpn-foot{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.cpn-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px}
+.cpn-row strong{color:var(--text)}
+.cpn-big{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:var(--green)}
+.cpn-warn{font-size:9px;color:var(--red);margin-top:4px}
+
+/* ===== ANALYSIS ===== */
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px}
+.sc{background:var(--bg2);border-radius:7px;padding:10px;text-align:center;border:1px solid var(--border)}
+.sc-l{font-size:8px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px}
+.sc-v{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700}
+.sc-s{font-size:9px;color:var(--text2);margin-top:2px}
+.pbar{display:flex;height:28px;border-radius:7px;overflow:hidden;margin:8px 0}
+.pbar>div{display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;min-width:30px;transition:width .5s}
+.pb1{background:var(--blue)}.pbx{background:var(--amber)}.pb2{background:var(--red)}
+.bets{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px;margin-top:8px}
+.bet{background:var(--bg2);border-radius:7px;padding:10px;border-left:3px solid;cursor:pointer;transition:.12s}
+.bet:hover{transform:translateX(2px)}
+.bet.hi{border-color:var(--green)}.bet.md{border-color:var(--amber)}.bet.lo{border-color:var(--red)}
+
+/* ===== AI CARDS ===== */
+.ai-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.ai-cd{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ai-hdr{padding:12px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px;color:#fff}
+.ai-hdr.banko{background:linear-gradient(135deg,var(--green),#0a9e6e)}.ai-hdr.surpriz{background:linear-gradient(135deg,var(--amber),var(--red))}.ai-hdr.karisik{background:linear-gradient(135deg,var(--blue),var(--purple))}.ai-hdr.deger{background:linear-gradient(135deg,var(--cyan),var(--blue))}
+.ai-hdr span{font-size:9px;opacity:.7;margin-left:auto}
+.ai-body{padding:10px 14px}
+.ai-m{display:flex;align-items:center;gap:5px;padding:5px 0;border-bottom:1px solid var(--border);font-size:10px}
+.ai-m:last-child{border:none}
+.ai-m-tm{font-weight:600;flex:1}.ai-m-pk{padding:1px 6px;border-radius:5px;font-weight:700;font-size:9px;background:rgba(77,141,247,.1);color:var(--blue)}
+.ai-m-odd{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--green);margin-left:6px}
+.ai-ft{padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:10px}
+.ai-ft .todd{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:var(--green)}
+
+/* ===== HISTORY ===== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:6px;margin-bottom:14px}
+.st{background:var(--bg2);border-radius:7px;padding:10px;text-align:center;border:1px solid var(--border)}
+.st-v{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800}
+.st-l{font-size:8px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.hi{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:4px;display:flex;align-items:center;gap:8px;font-size:11px}
+.hi.won{border-left:3px solid var(--green)}.hi.lost{border-left:3px solid var(--red)}.hi.pending{border-left:3px solid var(--amber)}
+
+/* ===== UTILS ===== */
+.empty{text-align:center;padding:36px 16px;color:var(--text3)}.empty-ic{font-size:32px;margin-bottom:6px}.empty-t{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:3px}.empty-s{font-size:10px;line-height:1.5}
+.ld{display:flex;flex-direction:column;align-items:center;padding:36px;gap:10px}.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+.ntf{position:fixed;top:60px;right:16px;padding:8px 14px;border-radius:7px;font-size:11px;font-weight:600;z-index:999;animation:si .3s;box-shadow:0 4px 16px rgba(0,0,0,.2)}.ntf.ok{background:var(--green);color:#fff}.ntf.er{background:var(--red);color:#fff}.ntf.info{background:var(--blue);color:#fff}
+@keyframes si{from{transform:translateY(-20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.cg{color:var(--green)}.cr{color:var(--red)}.ca{color:var(--amber)}.cb{color:var(--blue)}.cp{color:var(--purple)}.cc{color:var(--cyan)}
+.cors{background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:12px 16px;font-size:11px;color:var(--amber);line-height:1.5;display:none}
+@media(max-width:768px){.hdr{padding:8px 12px}.mn{padding:12px}.mi{grid-template-columns:1fr;gap:4px}.odds-row{display:flex;gap:4px}.cpn-panel{width:280px}.scores{grid-template-columns:repeat(2,1fr)}.ai-cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="status-bar">
+    <span style="display:flex;align-items:center;gap:4px"><span class="dot off" id="cDot"></span><strong id="cTxt">Bağlanıyor...</strong></span>
+    <span>📅 <strong id="sDate">—</strong></span>
+    <span>🔄 <strong id="sTime">—</strong></span>
+    <span>⚽ <strong id="sAll">0</strong></span>
+    <span>🎫 <strong id="sIdd">0</strong></span>
+    <span>🔴 <strong id="sLive">0</strong></span>
+  </div>
+  <div class="hdr">
+    <div class="logo"><div class="logo-ic">⚽</div><div><div class="logo-t">İddaa Analiz Pro</div><div class="logo-s">Mackolik · AI · Veritabanı · v4</div></div></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div class="tabs">
+        <button class="tab on" data-tab="matches">📋 Bülten</button>
+        <button class="tab" data-tab="analysis">📊 Analiz</button>
+        <button class="tab" data-tab="ai">🤖 AI Kupon</button>
+        <button class="tab" data-tab="db">🗄️ Veri</button>
+        <button class="tab" data-tab="history">📜 Geçmiş</button>
+      </div>
+      <button class="theme-btn" id="thBtn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+  <div class="mn">
+    <div class="cors" id="corsBox">⚠️ CORS Hatası — Dosyayı indirip tarayıcınızda açın veya <a href="https://chrome.google.com/webstore/detail/allow-cors/lhobafahddgcelffkeicbaginigeejlf" target="_blank">Allow CORS</a> uzantısı kullanın.</div>
+
+    <!-- BÜLTEN -->
+    <div class="sec on" id="sec-matches">
+      <div class="cd">
+        <div class="cd-t"><i></i>GÜNÜN MAÇLARI</div>
+        <div class="filters">
+          <div class="fg"><label class="fl">Ülke</label><select id="fC" onchange="filter()"><option value="">Tümü</option></select></div>
+          <div class="fg"><label class="fl">Lig</label><select id="fL" onchange="filter()"><option value="">Tümü</option></select></div>
+          <div class="fg"><label class="fl">Durum</label><select id="fT" onchange="filter()"><option value="">Tümü</option><option value="iddaa">İddaa</option><option value="live">Canlı</option><option value="up">Başlamamış</option></select></div>
+          <div class="fg"><label class="fl">Risk</label><select id="fR" onchange="filter()"><option value="">Tümü</option><option value="safe">🟢 Güvenli</option><option value="mod">🟡 Orta</option><option value="risk">🔴 Riskli</option></select></div>
+          <button class="btn b1" onclick="load()">🔄 Yenile</button>
+        </div>
+        <div style="font-size:8px;color:var(--text3);margin-bottom:6px">Orana tıkla = seç (✓) → alttaki bardan <strong>Kupona Ekle</strong> | 📊 = analiz | Risk: 🟢 güvenli 🟡 orta 🔴 riskli</div>
+        <div id="mList"><div class="ld"><div class="spin"></div></div></div>
+      </div>
+    </div>
+    <!-- ANALİZ --><div class="sec" id="sec-analysis"><div id="anBox"><div class="empty"><div class="empty-ic">📊</div><div class="empty-t">Bültenden maç seçin</div></div></div></div>
+    <!-- AI --><div class="sec" id="sec-ai"><div class="cd"><div class="cd-t"><i></i>🤖 AI KUPON ÖNERİLERİ</div><div style="font-size:11px;color:var(--text2);margin-bottom:10px">Oranları + veritabanındaki takım istatistiklerini analiz ederek kupon oluşturur. <strong>🗄️ Veri</strong> sekmesinden geçmiş maç indirdikçe öneriler iyileşir.</div><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="btn bg" onclick="genAI()">🤖 Kuponları Oluştur</button><span style="font-size:9px;color:var(--text3);align-self:center" id="aiDbInfo"></span></div><div id="aiBox"></div></div></div>
+
+    <!-- VERİTABANI -->
+    <div class="sec" id="sec-db">
+      <div class="cd">
+        <div class="cd-t"><i></i>🗄️ GEÇMİŞ MAÇ VERİTABANI</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;line-height:1.5">
+          Mackolik'ten geçmiş günlerin maç sonuçlarını indirin. Veriler tarayıcınızda saklanır ve AI analizi için kullanılır.
+          İndirilen veriler takım formları, gol ortalamaları ve H2H istatistikleri oluşturur.
+        </div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:14px">
+          <div class="fg"><label class="fl">Başlangıç (kaç gün önce)</label><input type="number" id="dbFrom" value="7" min="1" max="90" style="width:80px"></div>
+          <div class="fg"><label class="fl">Bitiş (kaç gün önce)</label><input type="number" id="dbTo" value="1" min="1" max="90" style="width:80px"></div>
+          <button class="btn b1" onclick="fetchHistData()" id="dbBtn">📥 Verileri İndir</button>
+          <button class="btn b2" onclick="clearDB()">🗑️ DB Temizle</button>
+        </div>
+        <div id="dbStatus" style="font-size:11px;color:var(--text2);margin-bottom:10px"></div>
+        <div id="dbProgress" style="display:none;margin-bottom:12px">
+          <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden"><div id="dbBar" style="height:100%;background:var(--blue);border-radius:4px;width:0%;transition:width .3s"></div></div>
+          <div style="font-size:9px;color:var(--text3);margin-top:3px" id="dbProgText"></div>
+        </div>
+      </div>
+
+      <div class="cd">
+        <div class="cd-t"><i></i>📊 TAKIM İSTATİSTİKLERİ</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Veritabanından hesaplanan takım performansları. Veri indirdikçe doğruluk artar.</div>
+        <div class="fg" style="margin-bottom:10px"><label class="fl">Takım Ara</label><input type="text" id="teamSearch" placeholder="Takım adı yazın..." oninput="searchTeam()"></div>
+        <div id="teamStats"></div>
+      </div>
+
+      <div class="cd">
+        <div class="cd-t"><i></i>💾 VERİTABANI DURUMU</div>
+        <div class="stats" id="dbStats"></div>
+      </div>
+    </div>
+
+    <!-- GEÇMİŞ --><div class="sec" id="sec-history"><div class="cd"><div class="cd-t"><i></i>📜 KUPON GEÇMİŞİ</div><div class="stats" id="stBox"></div><div id="hList"></div></div></div>
+  </div>
+</div>
+
+<!-- SELECTION BAR -->
+<div class="selbar" id="selBar">
+  <span style="font-size:12px;font-weight:700">✅ <span class="cnt" id="selCnt">0</span> seçim</span>
+  <span style="font-size:11px;color:var(--text2)">Oran:</span><span class="todd" id="selOdd">0.00</span>
+  <button class="btn bg" onclick="selToCoupon()" style="font-size:12px;padding:8px 20px">🎫 Kupona Ekle</button>
+  <button class="btn br" onclick="clearSel()" style="font-size:11px;padding:8px 14px">🗑️ Temizle</button>
+</div>
+
+<!-- COUPON -->
+<div class="cpn-float" id="cpnFloat" style="display:none">
+  <div class="cpn-panel" id="cpnPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-weight:800;font-size:13px">🎫 Kuponum</span>
+      <span style="cursor:pointer;color:var(--text3);font-size:16px" onclick="toggleCpn()">✕</span>
+    </div>
+    <div id="cpnItems"></div>
+    <div class="cpn-foot" id="cpnFoot"></div>
+  </div>
+  <button class="cpn-btn" onclick="toggleCpn()">🎫 Kupon <span class="cnt" id="cpnCnt">0</span></button>
+</div>
+
+<script>
+// ===== İDDAA KURALLARI =====
+const IDDAA = { minBet: 50, maxBet: 20000, maxWin: 12500000, taxThreshold: 66935, taxRate: 0.1 };
+
+// ===== STATE =====
+let ALL = [], FILT = [], SEL = [], CPN = [], HIST = [];
+let cpnOpen = false;
+
+// ===== THEME =====
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  document.documentElement.setAttribute('data-theme', isLight ? '' : 'light');
+  document.getElementById('thBtn').textContent = isLight ? '🌙' : '☀️';
+  try { localStorage.setItem('theme', isLight ? 'dark' : 'light'); } catch(e) {}
+}
+try { if (localStorage.getItem('theme') === 'light') { document.documentElement.setAttribute('data-theme', 'light'); document.getElementById('thBtn').textContent = '☀️'; } } catch(e) {}
+
+// ===== TABS =====
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(x => x.classList.remove('on'));
+  t.classList.add('on');
+  document.getElementById('sec-' + t.dataset.tab).classList.add('on');
+}));
+
+// ===== RISK ENGINE =====
+const C_RISK = {'İngiltere':1,'Almanya':1,'İspanya':1,'Fransa':1,'İtalya':1.5,'Hollanda':1,'Türkiye':2,'Portekiz':1.5,'ABD':1,'Japonya':1,'İskoçya':1.5,'Güney Kore':1.5,'Avustralya':1.5,'Brezilya':2.5,'Arjantin':2.5,'Kolombiya':3,'Meksika':2.5,'Rusya':3,'Ukrayna':3,'Bulgaristan':3.5,'Sırbistan':3.5,'Polonya':2,'Norveç':1.5,'İsviçre':1.5,'Avusturya':2,'Kazakistan':4,'Çin Halk Cumhuriyeti':3,'Tayland':4};
+const RISKY_KW = ['amatör','bölgesel','gençler','u17','u19','u21','3.lig','4.lig','5.lig','küme düşme','reserves'];
+const SAFE_KW = ['şampiyonlar','champions','premier lig','bundesliga','laliga','serie a','ligue 1'];
+
+function riskScore(m) {
+  let r = C_RISK[m.country] || 3;
+  const lc = (m.league + ' ' + m.leagueCode).toLowerCase();
+  RISKY_KW.forEach(k => { if (lc.includes(k)) r += 0.7; });
+  SAFE_KW.forEach(k => { if (lc.includes(k)) r -= 0.5; });
+  // Odds anomalies
+  const anoms = [];
+  if (m.o1 > 0 && m.oX > 0 && m.o2 > 0) {
+    const tot = 1/m.o1 + 1/m.oX + 1/m.o2, mar = (tot-1)*100;
+    if (mar < 3 && mar > 0) anoms.push('Düşük marj');
+    if (mar > 20) anoms.push('Yüksek marj');
+    if (m.o1 < 1.10 || m.o2 < 1.10) anoms.push('Aşırı düşük oran');
+    if (m.oX < m.o1 && m.oX < m.o2 && m.oX < 2.5) anoms.push('Beraberlik favori');
+  }
+  if (anoms.length >= 2) r += 1.2; else if (anoms.length === 1) r += 0.5;
+  r = Math.max(1, Math.min(5, Math.round(r)));
+  const cat = r <= 2 ? 'safe' : r <= 3 ? 'mod' : 'risk';
+  const lbl = r <= 1 ? 'Çok Güvenli' : r <= 2 ? 'Güvenli' : r <= 3 ? 'Orta Risk' : r <= 4 ? 'Riskli' : 'Çok Riskli';
+  return { r, cat, lbl, anoms };
+}
+
+// ===== PARSE =====
+const F = {id:0,hId:1,home:2,aId:3,away:4,minute:6,scoreStr:7,hGoals:12,aGoals:13,time:16,o1:18,oX:19,o2:20,oU:21,oO:22,date:35,league:36,hasIddaa:37};
+function parse(m) {
+  const lg = m[F.league] || [], min = m[F.minute];
+  const isLive = min && min !== '' && min !== 'MS' && min !== 'IY';
+  const isMS = min === 'MS', isHT = min === 'IY';
+  const p = {id:m[F.id], home:m[F.home], away:m[F.away], time:m[F.time], date:m[F.date], minute:min,
+    hG:m[F.hGoals]||0, aG:m[F.aGoals]||0,
+    o1:parseFloat(m[F.o1])||0, oX:parseFloat(m[F.oX])||0, o2:parseFloat(m[F.o2])||0,
+    oU:parseFloat(m[F.oU])||0, oO:parseFloat(m[F.oO])||0,
+    country:lg[1]||'', league:lg[3]||'', leagueCode:lg[9]||'',
+    hasIddaa:m[F.hasIddaa]===1, isLive, isMS, isHT,
+    status: isMS?'done':(isLive||isHT)?'live':'up'
+  };
+  p.risk = riskScore(p);
+  return p;
+}
+
+// ===== LOAD =====
+async function load() {
+  setSt('ld','Güncelleniyor...');
+  try {
+    const r = await fetch('https://vd.mackolik.com/livedata?group=0');
+    const j = await r.json();
+    ALL = (j.m||[]).map(parse);
+    document.getElementById('corsBox').style.display = 'none';
+    setSt('on','Bağlı'); updInfo(); popFilters(); filter();
+    ntf('✅ ' + ALL.length + ' maç', 'ok');
+  } catch(e) {
+    document.getElementById('corsBox').style.display = 'block';
+    setSt('off','Hata');
+    document.getElementById('mList').innerHTML = '<div class="empty"><div class="empty-ic">⚠️</div><div class="empty-t">Bağlantı Hatası</div><div class="empty-s">Dosyayı indirip tarayıcıda açın.<br><button class="btn b1" onclick="load()" style="margin-top:6px">Tekrar Dene</button></div></div>';
+  }
+}
+function setSt(s,t) { document.getElementById('cDot').className = 'dot '+(s==='on'?'on':s==='ld'?'ld':'off'); document.getElementById('cTxt').textContent = t; }
+function updInfo() {
+  const n = new Date();
+  document.getElementById('sDate').textContent = n.toLocaleDateString('tr-TR',{day:'2-digit',month:'short',weekday:'short'});
+  document.getElementById('sTime').textContent = n.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('sAll').textContent = ALL.length;
+  document.getElementById('sIdd').textContent = ALL.filter(m=>m.hasIddaa).length;
+  document.getElementById('sLive').textContent = ALL.filter(m=>m.status==='live').length;
+}
+function popFilters() {
+  fillSel('fC', [...new Set(ALL.map(m=>m.country))].filter(Boolean).sort());
+  fillSel('fL', [...new Set(ALL.map(m=>m.league))].filter(Boolean).sort());
+}
+function fillSel(id, items) { const el=document.getElementById(id),v=el.value; el.innerHTML='<option value="">Tümü</option>'; items.forEach(i=>{const o=document.createElement('option');o.value=i;o.textContent=i;el.appendChild(o)}); el.value=v; }
+function filter() {
+  const c=document.getElementById('fC').value, l=document.getElementById('fL').value, t=document.getElementById('fT').value, r=document.getElementById('fR').value;
+  FILT = ALL.filter(m => {
+    if (c && m.country!==c) return false;
+    if (l && m.league!==l) return false;
+    if (t==='iddaa' && !m.hasIddaa) return false;
+    if (t==='live' && m.status!=='live') return false;
+    if (t==='up' && m.status!=='up') return false;
+    if (r && m.risk.cat!==r) return false;
+    return true;
+  });
+  render();
+}
+
+// ===== RENDER MATCHES =====
+function render() {
+  const el = document.getElementById('mList');
+  if (!FILT.length) { el.innerHTML='<div class="empty"><div class="empty-ic">🔍</div><div class="empty-t">Maç yok</div></div>'; return; }
+  const grp = {}; FILT.forEach(m => { const k=m.country+'·'+m.league; (grp[k]=grp[k]||[]).push(m); });
+  let h = '';
+  for (const [,ms] of Object.entries(grp)) {
+    const lr = ms[0].risk, live = ms.filter(m=>m.status==='live').length;
+    const rc = lr.cat==='safe'?'safe':lr.cat==='mod'?'mod':'risk';
+    h += `<div class="lhdr"><span class="rdot r${lr.r}"></span>${ms[0].country} · ${ms[0].league} (${ms.length})${live?` <span class="badge lv">${live} CANLI</span>`:''}<span class="rbadge ${rc}">${lr.lbl}</span></div>`;
+    ms.forEach(m => {
+      const idx = ALL.indexOf(m);
+      const sel = SEL.find(s=>s.id===m.id);
+      const t1 = sel&&sel.pick==='1'?'ticked':'', tX = sel&&sel.pick==='X'?'ticked':'', t2 = sel&&sel.pick==='2'?'ticked':'';
+      const hs = sel?'hassel':'';
+      const inC = CPN.some(c=>c.id===m.id);
+      const rCls = m.risk.cat==='risk'?'rhi':m.risk.cat==='mod'?'rmd':'rlo';
+      const minD = m.isLive?`<span class="badge lv">${m.minute}</span>`:m.isHT?'<span class="badge lv">DV</span>':m.isMS?'<span class="badge dn">MS</span>':m.time||'';
+      const anom = m.risk.anoms.length?`<span class="anom">⚠${m.risk.anoms[0]}</span>`:'';
+      const cpnMark = inC?'<span class="incpn">✓KUPONDA</span>':'';
+      h += `<div class="mi ${m.status==='live'?'live':''} ${hs} ${rCls}">
+        <div class="mi-tm">${m.home} — ${m.away}<small>${m.hasIddaa?'🎫 ':''}${m.date||''}${anom}${cpnMark}</small></div>
+        <div class="mi-t">${minD}</div>
+        ${m.status!=='up'?`<div class="mi-s">${m.hG}-${m.aG}</div>`:'<div></div>'}
+        <div class="odd h ${t1}" onclick="tSel(${idx},'1',${m.o1})">${m.o1?m.o1.toFixed(2):'—'}</div>
+        <div class="odd d ${tX}" onclick="tSel(${idx},'X',${m.oX})">${m.oX?m.oX.toFixed(2):'—'}</div>
+        <div class="odd a ${t2}" onclick="tSel(${idx},'2',${m.o2})">${m.o2?m.o2.toFixed(2):'—'}</div>
+        <span class="rdot r${m.risk.r}" title="${m.risk.lbl}" style="margin:auto"></span>
+        <div class="mi-x" onclick="analyze(${idx})">📊</div>
+      </div>`;
+    });
+  }
+  el.innerHTML = h;
+  updSelBar();
+}
+
+// ===== SELECTION SYSTEM =====
+function tSel(idx, pick, odd) {
+  const m = ALL[idx]; if (!m || !odd || odd <= 0) return;
+  const i = SEL.findIndex(s => s.id === m.id);
+  if (i >= 0) {
+    if (SEL[i].pick === pick) SEL.splice(i, 1); // deselect
+    else { SEL[i].pick = pick; SEL[i].odd = odd; } // change
+  } else {
+    SEL.push({ id:m.id, home:m.home, away:m.away, pick, odd, league:m.league, idx });
+  }
+  render();
+}
+function clearSel() { SEL = []; render(); ntf('Seçimler temizlendi','info'); }
+function selToCoupon() {
+  if (!SEL.length) return ntf('Seçim yok!','er');
+  const n = SEL.length;
+  SEL.forEach(s => {
+    const i = CPN.findIndex(c => c.id === s.id);
+    if (i >= 0) { CPN[i].pick = s.pick; CPN[i].odd = s.odd; }
+    else CPN.push({...s});
+  });
+  SEL = [];
+  updCpn(); render();
+  cpnOpen = true; document.getElementById('cpnPanel').classList.add('open');
+  ntf('✅ ' + n + ' maç kupona eklendi!', 'ok');
+}
+function updSelBar() {
+  const bar = document.getElementById('selBar');
+  if (SEL.length) {
+    bar.classList.add('show');
+    document.getElementById('selCnt').textContent = SEL.length;
+    document.getElementById('selOdd').textContent = SEL.reduce((a,s) => a*s.odd, 1).toFixed(2);
+  } else bar.classList.remove('show');
+}
+
+// ===== COUPON =====
+function toggleCpn() { cpnOpen = !cpnOpen; document.getElementById('cpnPanel').classList.toggle('open', cpnOpen); }
+function rmCpn(id) { CPN = CPN.filter(c => c.id !== id); updCpn(); render(); }
+function clearCpn() { CPN = []; updCpn(); render(); ntf('Kupon temizlendi','info'); }
+function updCpn() {
+  const fl = document.getElementById('cpnFloat');
+  fl.style.display = CPN.length ? 'flex' : 'none';
+  document.getElementById('cpnCnt').textContent = CPN.length;
+  const ci = document.getElementById('cpnItems');
+  if (!CPN.length) { ci.innerHTML='<div style="text-align:center;color:var(--text3);font-size:11px;padding:12px">Boş</div>'; document.getElementById('cpnFoot').innerHTML=''; return; }
+  ci.innerHTML = CPN.map(c => `<div class="ci"><div class="ci-info"><div class="ci-tm">${c.home}—${c.away}</div><div class="ci-pk">MS ${c.pick}</div></div><div class="ci-odd">${c.odd.toFixed(2)}</div><span class="ci-rm" onclick="rmCpn(${c.id})">✕</span></div>`).join('');
+  const tOdd = CPN.reduce((a,c) => a*c.odd, 1);
+  const ft = document.getElementById('cpnFoot');
+  ft.innerHTML = `
+    <div class="cpn-row"><span>Maç</span><strong>${CPN.length}</strong></div>
+    <div class="cpn-row"><span>Toplam Oran</span><span class="cpn-big">${tOdd.toFixed(2)}</span></div>
+    <div class="cpn-row" style="align-items:center"><span>Misli (₺)</span><input type="number" id="misliInp" value="${getMisli()}" min="${IDDAA.minBet}" max="${IDDAA.maxBet}" step="10" onchange="setMisli(this.value);updCpn()" style="width:90px;text-align:center;font-weight:700;font-size:13px"></div>
+    <div class="cpn-row"><span>Kazanç</span><strong style="color:var(--green)">${Math.min(tOdd * getMisli(), IDDAA.maxWin).toLocaleString('tr-TR')} ₺</strong></div>
+    ${tOdd * getMisli() > IDDAA.maxWin ? '<div class="cpn-warn">⚠️ Maks kazanç limiti: 12.500.000₺</div>' : ''}
+    ${tOdd * getMisli() > IDDAA.taxThreshold ? `<div style="font-size:9px;color:var(--amber);margin-top:2px">💰 ${IDDAA.taxThreshold.toLocaleString('tr-TR')}₺ üstü vergiye tabi (%10)</div>` : ''}
+    <div style="font-size:8px;color:var(--text3);margin-top:4px">Min: ${IDDAA.minBet}₺ · Maks: ${IDDAA.maxBet.toLocaleString('tr-TR')}₺</div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn bg" onclick="saveCpn()" style="flex:1">💾 Kaydet</button>
+      <button class="btn br" onclick="clearCpn()" style="padding:7px 10px">🗑️</button>
+    </div>`;
+}
+function getMisli() { try { return parseInt(localStorage.getItem('misli')) || IDDAA.minBet; } catch(e) { return IDDAA.minBet; } }
+function setMisli(v) { v = Math.max(IDDAA.minBet, Math.min(IDDAA.maxBet, parseInt(v)||IDDAA.minBet)); try { localStorage.setItem('misli', v); } catch(e) {} }
+
+function saveCpn() {
+  if (!CPN.length) return ntf('Kupon boş!','er');
+  HIST.unshift({ id:Date.now(), date:new Date().toLocaleString('tr-TR'), matches:JSON.parse(JSON.stringify(CPN)), tOdd:CPN.reduce((a,c)=>a*c.odd,1), misli:getMisli(), status:'pending', type:'Manuel' });
+  saveHist(); renderHist(); ntf('✅ Kupon kaydedildi!','ok');
+}
+
+// ===== ANALYSIS =====
+function analyze(idx) {
+  const m = ALL[idx]; if (!m) return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(x=>x.classList.remove('on'));
+  document.querySelector('[data-tab="analysis"]').classList.add('on');
+  document.getElementById('sec-analysis').classList.add('on');
+
+  const o1=m.o1,oX=m.oX,o2=m.o2,oU=m.oU,oO=m.oO;
+  let p1=0,pX=0,p2=0,mar=0;
+  if(o1>0&&oX>0&&o2>0){const r1=1/o1*100,rX=1/oX*100,r2=1/o2*100,t=r1+rX+r2;mar=t-100;p1=r1/t*100;pX=rX/t*100;p2=r2/t*100;}
+  let pO=0,pU=0;if(oO>0&&oU>0){const rO=1/oO*100,rU=1/oU*100,t=rO+rU;pO=rO/t*100;pU=rU/t*100;}
+
+  const bets=[];
+  if(p1>55)bets.push({t:`${m.home} (1)`,c:p1>68?'hi':'md',r:`%${p1.toFixed(0)} · Oran: ${o1.toFixed(2)}`,pick:'1',odd:o1});
+  if(p2>55)bets.push({t:`${m.away} (2)`,c:p2>68?'hi':'md',r:`%${p2.toFixed(0)} · Oran: ${o2.toFixed(2)}`,pick:'2',odd:o2});
+  if(pO>58)bets.push({t:'Üst 2.5',c:pO>65?'hi':'md',r:`%${pO.toFixed(0)} üst olasılık`});
+  else if(pU>58)bets.push({t:'Alt 2.5',c:pU>65?'hi':'md',r:`%${pU.toFixed(0)} alt olasılık`});
+  if(mar<6&&o1>0)bets.push({t:'Düşük Marj!',c:'hi',r:`%${mar.toFixed(1)} — Oranlar adil`});
+
+  document.getElementById('anBox').innerHTML = `<div class="cd">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <span style="font-size:16px;font-weight:800">${m.home} vs ${m.away}</span>
+      <span style="font-size:10px;color:var(--text3)">${m.country} · ${m.league} · ${m.date||''} ${m.time||''}</span>
+      <span class="rbadge ${m.risk.cat}" style="margin-left:auto"><span class="rdot r${m.risk.r}" style="width:6px;height:6px"></span>${m.risk.lbl}</span>
+    </div>
+    <div class="scores">
+      <div class="sc"><div class="sc-l">MS 1</div><div class="sc-v cb">${o1?o1.toFixed(2):'—'}</div><div class="sc-s">%${p1.toFixed(1)}</div></div>
+      <div class="sc"><div class="sc-l">MS X</div><div class="sc-v ca">${oX?oX.toFixed(2):'—'}</div><div class="sc-s">%${pX.toFixed(1)}</div></div>
+      <div class="sc"><div class="sc-l">MS 2</div><div class="sc-v cr">${o2?o2.toFixed(2):'—'}</div><div class="sc-s">%${p2.toFixed(1)}</div></div>
+      <div class="sc"><div class="sc-l">Üst 2.5</div><div class="sc-v cg">${oO?oO.toFixed(2):'—'}</div><div class="sc-s">%${pO.toFixed(1)}</div></div>
+      <div class="sc"><div class="sc-l">Alt 2.5</div><div class="sc-v cp">${oU?oU.toFixed(2):'—'}</div><div class="sc-s">%${pU.toFixed(1)}</div></div>
+      <div class="sc"><div class="sc-l">Marj</div><div class="sc-v ${mar<8?'cg':'ca'}">%${mar.toFixed(1)}</div></div>
+    </div>
+    ${o1>0?`<div class="pbar"><div class="pb1" style="width:${p1}%">%${p1.toFixed(0)}</div><div class="pbx" style="width:${pX}%">%${pX.toFixed(0)}</div><div class="pb2" style="width:${p2}%">%${p2.toFixed(0)}</div></div>`:''}
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px;margin:10px 0">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:6px"><span class="rdot r${m.risk.r}" style="width:6px;height:6px"></span> RİSK ANALİZİ</div>
+      <div style="font-size:11px;color:var(--text2);line-height:1.5">
+        <strong>Lig:</strong> ${m.risk.lbl}<br>
+        <strong>Anomali:</strong> ${m.risk.anoms.length?'⚠️ '+m.risk.anoms.join(', '):'✅ Normal'}
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:6px">🎯 ÖNERİLER <span style="font-weight:400">(tıkla=seç)</span></div>
+    <div class="bets">${bets.length?bets.map(b=>`<div class="bet ${b.c}" onclick="${b.pick?`tSel(${idx},'${b.pick}',${b.odd});render()`:''}" style="${b.pick?'cursor:pointer':''}"><div style="font-weight:700;font-size:11px">${b.t}</div><div style="font-size:9px;font-weight:700;color:${b.c==='hi'?'var(--green)':b.c==='md'?'var(--amber)':'var(--red)'}">${b.c==='hi'?'🟢 Yüksek':b.c==='md'?'🟡 Orta':'🔴 Düşük'}</div><div style="font-size:10px;color:var(--text2);margin-top:3px">${b.r}</div></div>`).join(''):'<span style="color:var(--text3);font-size:11px">Belirgin öneri yok</span>'}</div>
+    <button class="btn b2" onclick="document.querySelector('[data-tab=matches]').click()" style="margin-top:12px">← Geri</button>
+  </div>`;
+}
+
+// ===== AI ENGINE =====
+function genAI() {
+  const up = ALL.filter(m => m.status==='up' && m.o1>0 && m.oX>0 && m.o2>0 && m.hasIddaa);
+  if (!up.length) { document.getElementById('aiBox').innerHTML='<div class="empty"><div class="empty-ic">⚠️</div><div class="empty-t">Yeterli maç yok</div></div>'; return; }
+  const teamCount = Object.keys(TEAMS).length;
+  document.getElementById('aiDbInfo').textContent = teamCount > 0 ? `📦 ${teamCount} takım verisi kullanılıyor` : '⚠️ Veri sekmesinden geçmiş indirin';
+  const an = up.map(m => {
+    const r1=1/m.o1,rX=1/m.oX,r2=1/m.o2,t=r1+rX+r2;
+    let p1=r1/t*100, pX=rX/t*100, p2=r2/t*100;
+    // Enhance with team stats if available
+    const hT=TEAMS[m.home], aT=TEAMS[m.away];
+    if (hT && hT.matches>=3 && aT && aT.matches>=3) {
+      const hR=hT.w/hT.matches, aR=aT.w/aT.matches;
+      const hH=hT.homeW/Math.max(1,hT.homeW+hT.homeD+hT.homeL);
+      const aA=aT.awayW/Math.max(1,aT.awayW+aT.awayD+aT.awayL);
+      p1=p1*0.7+(hR*50+hH*50)*0.3; p2=p2*0.7+(aR*50+aA*50)*0.3; pX=Math.max(5,100-p1-p2);
+    }
+    const picks=[{pick:'1',odd:m.o1,prob:p1,lbl:`${m.home} (1)`},{pick:'X',odd:m.oX,prob:pX,lbl:'Beraberlik'},{pick:'2',odd:m.o2,prob:p2,lbl:`${m.away} (2)`}];
+    const best=picks.slice().sort((a,b)=>b.prob-a.prob)[0];
+    const surp=picks.slice().sort((a,b)=>b.odd-a.odd)[0];
+    const val=picks.slice().sort((a,b)=>(b.prob*Math.log(b.odd+1))-(a.prob*Math.log(a.odd+1)))[0];
+    return {...m,p1,pX,p2,best,surp,val,hT,aT};
+  });
+
+  const banko = an.filter(m=>m.best.prob>55&&m.risk.r<=3).sort((a,b)=>b.best.prob-a.best.prob).slice(0,4);
+  const surpriz = an.filter(m=>m.surp.odd>2.5&&m.surp.odd<8).sort((a,b)=>b.surp.odd-a.surp.odd).slice(0,3);
+  const karisik = [...an.filter(m=>m.best.prob>55&&m.risk.r<=3).slice(0,2).map(m=>({...m,use:m.best})),...an.filter(m=>m.surp.odd>2.5&&m.risk.r<=3).slice(0,1).map(m=>({...m,use:m.surp}))];
+  const deger = an.filter(m=>m.risk.r<=4).sort((a,b)=>(b.val.prob*Math.log(b.val.odd+1))-(a.val.prob*Math.log(a.val.odd+1))).slice(0,5);
+
+  function card(type, title, emoji, matches, pickFn) {
+    if (!matches.length) return '';
+    const tO = matches.reduce((a,m)=>a*(pickFn(m).odd),1);
+    const data = JSON.stringify(matches.map(m=>({id:m.id,home:m.home,away:m.away,pick:pickFn(m).pick,odd:pickFn(m).odd,league:m.league,idx:ALL.indexOf(m)})));
+    return `<div class="ai-cd"><div class="ai-hdr ${type}">${emoji} ${title}</div><div class="ai-body">
+      ${matches.map(m=>{const p=pickFn(m);return`<div class="ai-m"><span class="rdot r${m.risk.r}" style="width:5px;height:5px"></span><div class="ai-m-tm">${m.home}—${m.away}</div><span class="ai-m-pk">${p.lbl}</span><span class="ai-m-odd">${p.odd.toFixed(2)}</span></div>`}).join('')}
+    </div><div class="ai-ft"><span>T.Oran:</span><span class="todd">${tO.toFixed(2)}</span><button class="btn bg" onclick='aiLoad(${data})' style="margin-left:auto;font-size:10px;padding:5px 12px">🎫 Kupona Ekle</button></div></div>`;
+  }
+
+  document.getElementById('aiBox').innerHTML = '<div class="ai-cards">'
+    + card('banko','BANKO','🏆',banko,m=>m.best)
+    + card('surpriz','SÜRPRİZ','🎲',surpriz,m=>m.surp)
+    + card('karisik','KARIŞIK','🎯',karisik,m=>m.use||m.best)
+    + card('deger','DEĞER','💎',deger,m=>m.val)
+    + '</div>';
+}
+
+function aiLoad(picks) {
+  CPN = picks.map(p => ({...p}));
+  updCpn(); render();
+  cpnOpen = true; document.getElementById('cpnPanel').classList.add('open');
+  ntf('✅ AI kuponu yüklendi!','ok');
+}
+
+// ===== HISTORY =====
+function loadHist() { try { HIST = JSON.parse(localStorage.getItem('iddaa_hist')||'[]'); } catch(e) { HIST=[]; } }
+function saveHist() { try { localStorage.setItem('iddaa_hist', JSON.stringify(HIST)); } catch(e) {} }
+function setRes(i, s) { HIST[i].status = s; saveHist(); renderHist(); ntf(s==='won'?'✅ Tebrikler!':'Kupon kaybetti','info'); }
+function clearHist() { if(confirm('Tüm geçmiş silinecek, emin misiniz?')){HIST=[];saveHist();renderHist();ntf('Geçmiş temizlendi','info');} }
+function renderHist() {
+  const w=HIST.filter(h=>h.status==='won'), l=HIST.filter(h=>h.status==='lost'), p=HIST.filter(h=>h.status==='pending');
+  const rate = (w.length+l.length)>0 ? (w.length/(w.length+l.length)*100) : 0;
+  const profit = w.reduce((a,h)=>a+(h.tOdd*(h.misli||50)),0) - (w.length+l.length)*(HIST[0]?.misli||50);
+  document.getElementById('stBox').innerHTML = `
+    <div class="st"><div class="st-v cb">${HIST.length}</div><div class="st-l">Toplam</div></div>
+    <div class="st"><div class="st-v cg">${w.length}</div><div class="st-l">Kazanan</div></div>
+    <div class="st"><div class="st-v cr">${l.length}</div><div class="st-l">Kaybeden</div></div>
+    <div class="st"><div class="st-v ca">${p.length}</div><div class="st-l">Bekleyen</div></div>
+    <div class="st"><div class="st-v ${rate>40?'cg':'cr'}">%${rate.toFixed(0)}</div><div class="st-l">Başarı</div></div>
+    <div class="st"><div class="st-v ${profit>=0?'cg':'cr'}">${profit>=0?'+':''}${profit.toFixed(0)}₺</div><div class="st-l">Kar/Zarar</div></div>`;
+  const hl = document.getElementById('hList');
+  if (!HIST.length) { hl.innerHTML='<div class="empty"><div class="empty-ic">📜</div><div class="empty-t">Kupon yok</div></div>'; return; }
+  hl.innerHTML = `<button class="btn b2" onclick="clearHist()" style="margin-bottom:8px;font-size:10px">🗑️ Geçmişi Temizle</button>` + HIST.map((h,i) => `<div class="hi ${h.status==='won'?'won':h.status==='lost'?'lost':'pending'}">
+    <div style="flex:1"><div style="font-size:9px;color:var(--text3)">${h.date} · ${h.type||'Manuel'}</div><div style="font-weight:600;font-size:11px">${h.matches.map(m=>`${m.home.slice(0,8)}-${m.away.slice(0,8)}(${m.pick})`).join(' · ')}</div></div>
+    <div style="text-align:right"><div style="font-family:'JetBrains Mono';font-weight:700;font-size:13px">${h.tOdd.toFixed(2)} × ${h.misli||50}₺</div>
+    <div style="font-size:9px;font-weight:700;color:${h.status==='won'?'var(--green)':h.status==='lost'?'var(--red)':'var(--amber)'}">${h.status==='won'?'KAZANDI':h.status==='lost'?'KAYBETTİ':'BEKLİYOR'}</div>
+    ${h.status==='pending'?`<div style="display:flex;gap:3px;margin-top:3px;justify-content:flex-end"><button class="btn bg" onclick="setRes(${i},'won')" style="padding:2px 6px;font-size:8px">✅</button><button class="btn br" onclick="setRes(${i},'lost')" style="padding:2px 6px;font-size:8px">❌</button></div>`:''}</div>
+  </div>`).join('');
+}
+
+// ===== HISTORICAL DATABASE =====
+let DB = []; // {date, matches: [{home, away, hG, aG, o1, oX, o2, country, league}]}
+function loadDB() { try { DB = JSON.parse(localStorage.getItem('iddaa_db')||'[]'); } catch(e) { DB=[]; } }
+function saveDB() { try { localStorage.setItem('iddaa_db', JSON.stringify(DB)); } catch(e) { ntf('DB kayıt hatası - localStorage dolu olabilir','er'); } }
+
+async function fetchHistData() {
+  const from = parseInt(document.getElementById('dbFrom').value)||7;
+  const to = parseInt(document.getElementById('dbTo').value)||1;
+  if (from < to) { ntf('Başlangıç bitiş\'ten büyük olmalı','er'); return; }
+  const btn = document.getElementById('dbBtn');
+  btn.disabled = true; btn.textContent = '⏳ İndiriliyor...';
+  document.getElementById('dbProgress').style.display = 'block';
+
+  const dates = [];
+  for (let i = from; i >= to; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    dates.push({ str: `${dd}/${mm}/${yyyy}`, iso: `${yyyy}-${mm}-${dd}` });
+  }
+
+  let done = 0, added = 0;
+  for (const dt of dates) {
+    // Skip if already in DB
+    if (DB.find(d => d.date === dt.iso)) { done++; continue; }
+    try {
+      const r = await fetch(`https://vd.mackolik.com/livedata?date=${dt.str}`);
+      const j = await r.json();
+      const matches = (j.m||[]).filter(m => m[6] === 'MS').map(m => {
+        const lg = m[36]||[];
+        return {
+          home: m[2], away: m[4], hG: m[12]||0, aG: m[13]||0,
+          o1: parseFloat(m[18])||0, oX: parseFloat(m[19])||0, o2: parseFloat(m[20])||0,
+          oU: parseFloat(m[21])||0, oO: parseFloat(m[22])||0,
+          country: lg[1]||'', league: lg[3]||'',
+          result: (m[12]||0) > (m[13]||0) ? '1' : (m[12]||0) < (m[13]||0) ? '2' : 'X'
+        };
+      });
+      if (matches.length > 0) {
+        DB.push({ date: dt.iso, matches });
+        added += matches.length;
+      }
+    } catch(e) { console.warn('Fetch failed for', dt.str); }
+    done++;
+    document.getElementById('dbBar').style.width = (done/dates.length*100)+'%';
+    document.getElementById('dbProgText').textContent = `${done}/${dates.length} gün · ${added} maç eklendi`;
+    await new Promise(r => setTimeout(r, 300)); // Rate limit
+  }
+
+  saveDB(); buildTeamStats();
+  btn.disabled = false; btn.textContent = '📥 Verileri İndir';
+  document.getElementById('dbProgress').style.display = 'none';
+  ntf(`✅ ${added} maç indirildi (${dates.length} gün)`, 'ok');
+  renderDBStats();
+}
+
+function clearDB() {
+  if (!confirm('Tüm veritabanı silinecek. Emin misiniz?')) return;
+  DB = []; saveDB(); TEAMS = {};
+  try { localStorage.removeItem('iddaa_teams'); } catch(e) {}
+  renderDBStats(); document.getElementById('teamStats').innerHTML = '';
+  ntf('Veritabanı temizlendi','info');
+}
+
+function renderDBStats() {
+  const totalMatches = DB.reduce((a,d) => a + d.matches.length, 0);
+  const totalDays = DB.length;
+  const teams = new Set();
+  DB.forEach(d => d.matches.forEach(m => { teams.add(m.home); teams.add(m.away); }));
+  const dbSize = (new Blob([JSON.stringify(DB)]).size / 1024).toFixed(0);
+  document.getElementById('dbStats').innerHTML = `
+    <div class="st"><div class="st-v cb">${totalDays}</div><div class="st-l">Gün</div></div>
+    <div class="st"><div class="st-v cg">${totalMatches}</div><div class="st-l">Maç</div></div>
+    <div class="st"><div class="st-v cp">${teams.size}</div><div class="st-l">Takım</div></div>
+    <div class="st"><div class="st-v ca">${dbSize} KB</div><div class="st-l">Boyut</div></div>`;
+  document.getElementById('dbStatus').textContent = totalDays > 0
+    ? `📦 ${totalDays} gün, ${totalMatches} maç, ${teams.size} takım kayıtlı.`
+    : '📭 Veritabanı boş. Yukarıdan veri indirin.';
+}
+
+// ===== TEAM STATISTICS ENGINE =====
+let TEAMS = {};
+function buildTeamStats() {
+  TEAMS = {};
+  DB.forEach(d => d.matches.forEach(m => {
+    [m.home, m.away].forEach(name => {
+      if (!TEAMS[name]) TEAMS[name] = { name, w:0, d:0, l:0, gf:0, ga:0, matches:0, form:[], homeW:0, homeD:0, homeL:0, awayW:0, awayD:0, awayL:0 };
+    });
+    const h = TEAMS[m.home], a = TEAMS[m.away];
+    h.matches++; a.matches++;
+    h.gf += m.hG; h.ga += m.aG;
+    a.gf += m.aG; a.ga += m.hG;
+    if (m.result === '1') { h.w++; h.homeW++; a.l++; a.awayL++; h.form.push('W'); a.form.push('L'); }
+    else if (m.result === '2') { h.l++; h.homeL++; a.w++; a.awayW++; h.form.push('L'); a.form.push('W'); }
+    else { h.d++; h.homeD++; a.d++; a.awayD++; h.form.push('D'); a.form.push('D'); }
+  }));
+  // Keep only last 10 form
+  Object.values(TEAMS).forEach(t => t.form = t.form.slice(-10));
+  try { localStorage.setItem('iddaa_teams', JSON.stringify(TEAMS)); } catch(e) {}
+}
+function loadTeams() { try { TEAMS = JSON.parse(localStorage.getItem('iddaa_teams')||'{}'); } catch(e) { TEAMS={}; } }
+
+function searchTeam() {
+  const q = document.getElementById('teamSearch').value.toLowerCase().trim();
+  const el = document.getElementById('teamStats');
+  if (q.length < 2) { el.innerHTML = ''; return; }
+  const found = Object.values(TEAMS).filter(t => t.name.toLowerCase().includes(q)).slice(0, 10);
+  if (!found.length) { el.innerHTML = '<div style="color:var(--text3);font-size:11px">Takım bulunamadı. Önce veritabanına veri indirin.</div>'; return; }
+  el.innerHTML = found.map(t => {
+    const pts = t.w*3 + t.d;
+    const gpg = t.matches ? (t.gf/t.matches).toFixed(1) : 0;
+    const gapg = t.matches ? (t.ga/t.matches).toFixed(1) : 0;
+    const formHTML = t.form.slice(-5).map(f => `<span style="display:inline-block;width:16px;height:16px;border-radius:3px;text-align:center;line-height:16px;font-size:8px;font-weight:700;color:#fff;background:${f==='W'?'var(--green)':f==='D'?'var(--amber)':'var(--red)'}">${f==='W'?'G':f==='D'?'B':'M'}</span>`).join('');
+    return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:6px">
+      <div style="font-weight:700;font-size:12px;margin-bottom:4px">${t.name} <span style="font-size:9px;color:var(--text3)">(${t.matches} maç)</span></div>
+      <div style="display:flex;gap:12px;font-size:10px;color:var(--text2);flex-wrap:wrap">
+        <span>✅ ${t.w}G ${t.d}B ${t.l}M</span>
+        <span>⚽ ${gpg} gol/maç</span>
+        <span>🛡️ ${gapg} yenilen/maç</span>
+        <span>🏠 ${t.homeW}G${t.homeD}B${t.homeL}M</span>
+        <span>✈️ ${t.awayW}G${t.awayD}B${t.awayL}M</span>
+      </div>
+      <div style="margin-top:4px;display:flex;align-items:center;gap:3px"><span style="font-size:8px;color:var(--text3)">Form:</span>${formHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== AUTO RESULT TRACKING =====
+async function autoCheckResults() {
+  const pending = HIST.filter(h => h.status === 'pending');
+  if (!pending.length) return;
+
+  let updated = 0;
+  // Get today's finished matches
+  const finished = ALL.filter(m => m.isMS);
+  if (!finished.length) return;
+
+  pending.forEach(h => {
+    let allDecided = true, allWon = true;
+    h.matches.forEach(cm => {
+      const fm = finished.find(f => f.home === cm.home && f.away === cm.away);
+      if (!fm) { allDecided = false; return; }
+      const result = fm.hG > fm.aG ? '1' : fm.hG < fm.aG ? '2' : 'X';
+      if (result !== cm.pick) allWon = false;
+    });
+    if (allDecided) {
+      h.status = allWon ? 'won' : 'lost';
+      updated++;
+    }
+  });
+
+  if (updated > 0) {
+    saveHist(); renderHist();
+    ntf(`🔄 ${updated} kupon otomatik güncellendi!`, 'info');
+  }
+}
+
+// ===== UTILS =====
+function ntf(msg, type) { const el=document.createElement('div'); el.className='ntf '+type; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),2500); }
+
+// ===== INIT =====
+loadHist(); loadDB(); loadTeams();
+renderHist(); renderDBStats();
+load().then(() => { autoCheckResults(); });
+setInterval(() => { load().then(() => autoCheckResults()); }, 60000);
+</script>
+</body>
+</html>
