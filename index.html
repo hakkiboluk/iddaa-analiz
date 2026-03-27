@@ -215,6 +215,20 @@ select:focus,input:focus{border-color:var(--blue)}
         <div class="cd-t"><i></i>💾 VERİTABANI DURUMU</div>
         <div class="stats" id="dbStats"></div>
       </div>
+
+      <div class="cd">
+        <div class="cd-t"><i></i>☁️ GITHUB SENKRONIZASYON</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.5">
+          GitHub token girerek kupon geçmişinizi repo'ya kaydedin. Böylece farklı cihazlardan erişebilirsiniz.<br>
+          Token: GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → repo yetkisi
+        </div>
+        <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap">
+          <div class="fg"><label class="fl">GitHub Token</label><input type="password" id="ghTokenInp" placeholder="ghp_..." style="width:260px" onchange="setGHToken(this.value)"></div>
+          <button class="btn b1" onclick="syncToGH()">☁️ Senkronize Et</button>
+          <button class="btn b2" onclick="loadRepoData()">📥 Repo Verilerini Yükle</button>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:6px">Token sadece tarayıcınızda saklanır, kimseyle paylaşılmaz.</div>
+      </div>
     </div>
 
     <!-- GEÇMİŞ --><div class="sec" id="sec-history"><div class="cd"><div class="cd-t"><i></i>📜 KUPON GEÇMİŞİ</div><div class="stats" id="stBox"></div><div id="hList"></div></div></div>
@@ -459,6 +473,7 @@ function saveCpn() {
   if (!CPN.length) return ntf('Kupon boş!','er');
   HIST.unshift({ id:Date.now(), date:new Date().toLocaleString('tr-TR'), matches:JSON.parse(JSON.stringify(CPN)), tOdd:CPN.reduce((a,c)=>a*c.odd,1), misli:getMisli(), status:'pending', type:'Manuel' });
   saveHist(); renderHist(); ntf('✅ Kupon kaydedildi!','ok');
+  syncToGH(); // Auto-sync to GitHub if token exists
 }
 
 // ===== ANALYSIS =====
@@ -589,9 +604,50 @@ function renderHist() {
 }
 
 // ===== HISTORICAL DATABASE =====
-let DB = []; // {date, matches: [{home, away, hG, aG, o1, oX, o2, country, league}]}
+let DB = [];
+const GH_REPO = 'hakkiboluk/iddaa-analiz';
 function loadDB() { try { DB = JSON.parse(localStorage.getItem('iddaa_db')||'[]'); } catch(e) { DB=[]; } }
-function saveDB() { try { localStorage.setItem('iddaa_db', JSON.stringify(DB)); } catch(e) { ntf('DB kayıt hatası - localStorage dolu olabilir','er'); } }
+function saveDB() { try { localStorage.setItem('iddaa_db', JSON.stringify(DB)); } catch(e) {} }
+function getGHToken() { try { return localStorage.getItem('gh_token')||''; } catch(e) { return ''; } }
+function setGHToken(t) { try { localStorage.setItem('gh_token',t); } catch(e) {} }
+
+// Load pre-fetched data from GitHub repo (populated by GitHub Actions daily)
+async function loadRepoData() {
+  try {
+    const base = location.href.includes('github.io') ? '/iddaa-analiz' : '.';
+    const [mR,tR] = await Promise.allSettled([
+      fetch(base+'/data/matches.json?t='+Date.now()).then(r=>r.ok?r.json():[]),
+      fetch(base+'/data/teams.json?t='+Date.now()).then(r=>r.ok?r.json():{})
+    ]);
+    const repoM = mR.status==='fulfilled'?mR.value:[];
+    const repoT = tR.status==='fulfilled'?tR.value:{};
+    if (repoM.length) {
+      const rd = new Set(repoM.map(d=>d.date));
+      DB = [...repoM,...DB.filter(d=>!rd.has(d.date))].sort((a,b)=>a.date.localeCompare(b.date));
+      saveDB();
+    }
+    if (Object.keys(repoT).length) { TEAMS={...repoT,...TEAMS}; try{localStorage.setItem('iddaa_teams',JSON.stringify(TEAMS))}catch(e){} }
+    console.log('📦 Repo data loaded:', repoM.length, 'days,', Object.keys(repoT).length, 'teams');
+  } catch(e) { console.log('Repo data not available yet'); }
+  renderDBStats();
+}
+
+async function ghSave(path, content, msg) {
+  const token = getGHToken(); if (!token) return false;
+  try {
+    let sha='';
+    try { const ex = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`,{headers:{'Authorization':'token '+token}}).then(r=>r.json()); sha=ex.sha||''; } catch(e){}
+    const body = {message:msg, content:btoa(unescape(encodeURIComponent(content))), branch:'main'};
+    if(sha)body.sha=sha;
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`,{method:'PUT',headers:{'Authorization':'token '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    return r.ok;
+  } catch(e) { return false; }
+}
+async function syncToGH() {
+  if (!getGHToken()) return;
+  const ok = await ghSave('data/history.json', JSON.stringify(HIST,null,2), '📜 Kupon sync '+new Date().toLocaleDateString('tr-TR'));
+  if(ok) ntf('☁️ GitHub\'a senkronize edildi','ok');
+}
 
 async function fetchHistData() {
   const from = parseInt(document.getElementById('dbFrom').value)||7;
@@ -752,7 +808,10 @@ function ntf(msg, type) { const el=document.createElement('div'); el.className='
 // ===== INIT =====
 loadHist(); loadDB(); loadTeams();
 renderHist(); renderDBStats();
-load().then(() => { autoCheckResults(); });
+// Set GitHub token input if saved
+try { const t=getGHToken(); if(t) document.getElementById('ghTokenInp').value = t; } catch(e){}
+// Load from mackolik + repo
+load().then(() => { autoCheckResults(); loadRepoData(); });
 setInterval(() => { load().then(() => autoCheckResults()); }, 60000);
 </script>
 </body>
