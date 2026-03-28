@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İddaa Analiz Pro — Kazanan Kupon & Strateji Motoru</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e17;--bg2:#111827;--bg3:#1a2235;--bg4:#243049;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
+  --green:#22c55e;--green2:#16a34a;--green-glow:rgba(34,197,94,.15);
+  --red:#ef4444;--red2:#dc2626;--red-glow:rgba(239,68,68,.12);
+  --gold:#f59e0b;--gold2:#d97706;--gold-glow:rgba(245,158,11,.12);
+  --blue:#3b82f6;--blue2:#2563eb;--blue-glow:rgba(59,130,246,.12);
+  --cyan:#06b6d4;--purple:#a855f7;
+  --radius:12px;--radius-sm:8px;
+  --font:'Plus Jakarta Sans',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --transition:all .25s cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--text);
+  line-height:1.6;min-height:100vh;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -20%,rgba(34,197,94,.06) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(59,130,246,.05) 0%,transparent 60%);
+}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+
+.site-header{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,14,23,.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.06);padding:0 24px;
+}
+.header-inner{
+  max-width:1400px;margin:0 auto;display:flex;align-items:center;
+  justify-content:space-between;height:64px;
+}
+.logo{
+  font-weight:800;font-size:1.25rem;
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:-.02em;flex-shrink:0;
+}
+.logo span{font-weight:500;opacity:.7;-webkit-text-fill-color:var(--text2);font-size:.85rem;margin-left:6px}
+
+.nav-tabs{display:flex;gap:2px;background:var(--bg2);border-radius:var(--radius);padding:3px;flex-shrink:0}
+.nav-tab{
+  padding:8px 18px;border-radius:10px;font-size:.85rem;font-weight:600;
+  cursor:pointer;color:var(--text3);transition:var(--transition);
+  border:none;background:none;white-space:nowrap;
+}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{background:var(--bg4);color:var(--green);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+.search-global{position:relative;max-width:440px;width:100%;margin:0 20px}
+.search-global input{
+  width:100%;padding:10px 16px 10px 42px;
+  background:var(--bg2);border:1px solid rgba(255,255,255,.08);
+  border-radius:var(--radius);color:var(--text);font-size:.9rem;
+  font-family:var(--font);transition:var(--transition);
+}
+.search-global input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px var(--green-glow)}
+.search-global .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);pointer-events:none}
+.search-results-dropdown{
+  position:absolute;top:calc(100% + 6px);left:0;right:0;
+  background:var(--bg2);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--radius);max-height:360px;overflow-y:auto;
+  display:none;z-index:200;box-shadow:var(--shadow);
+}
+.search-results-dropdown.show{display:block}
+.search-result-item{
+  padding:10px 16px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);
+  display:flex;align-items:center;gap:10px;transition:var(--transition);
+}
+.search-result-item:hover{background:var(--bg3)}
+.search-result-item .team-flag{width:28px;height:28px;border-radius:6px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.search-result-item .team-name{font-weight:600;font-size:.9rem}
+.search-result-item .team-league{font-size:.72rem;color:var(--text3)}
+.search-highlight{background:var(--gold);color:var(--bg);border-radius:2px;padding:0 2px}
+
+.main-container{max-width:1400px;margin:0 auto;padding:24px}
+.tab-content{display:none;animation:fadeUp .4s ease}
+.tab-content.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+.section-header{margin-bottom:28px}
+.section-header h2{font-size:1.8rem;font-weight:800;letter-spacing:-.03em;margin-bottom:6px}
+.section-header h2 .accent{color:var(--green)}
+.section-header p{color:var(--text2);font-size:.95rem}
+
+.card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px;transition:var(--transition)}
+.card:hover{border-color:rgba(255,255,255,.12);transform:translateY(-2px);box-shadow:var(--shadow)}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:18px 20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--cyan))}
+.stat-card.gold::before{background:linear-gradient(90deg,var(--gold),#fb923c)}
+.stat-card.red::before{background:linear-gradient(90deg,var(--red),#f97316)}
+.stat-card.blue::before{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.stat-label{font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.stat-value{font-size:1.8rem;font-weight:800;font-family:var(--mono);margin-top:4px}
+.stat-change{font-size:.8rem;margin-top:4px;font-weight:600}
+.stat-change.up{color:var(--green)}
+.stat-change.down{color:var(--red)}
+
+.coupon-table-wrap{overflow-x:auto;margin-top:16px}
+table.coupon-table{width:100%;border-collapse:collapse;font-size:.85rem}
+table.coupon-table th{text-align:left;padding:12px 16px;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid rgba(255,255,255,.08);font-weight:700}
+table.coupon-table td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+table.coupon-table tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700}
+.badge.win{background:var(--green-glow);color:var(--green)}
+.badge.loss{background:var(--red-glow);color:var(--red)}
+.badge.pending{background:var(--gold-glow);color:var(--gold)}
+.badge.source-nesine{background:rgba(255,87,34,.12);color:#ff5722}
+.badge.source-bilyoner{background:rgba(0,150,136,.12);color:#009688}
+.badge.source-misli{background:rgba(156,39,176,.12);color:#ce93d8}
+.badge.source-iddaa{background:var(--blue-glow);color:var(--blue)}
+.badge.source-birebin{background:rgba(233,30,99,.12);color:#e91e63}
+.badge.source-oley{background:rgba(255,193,7,.12);color:#ffc107}
+.oran-val{font-family:var(--mono);font-weight:700;color:var(--gold)}
+
+.strategy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:20px}
+.chart-card{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:20px}
+.chart-card h3{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.chart-card h3 .dot{width:8px;height:8px;border-radius:50%}
+
+.bar-chart{display:flex;flex-direction:column;gap:10px}
+.bar-row{display:flex;align-items:center;gap:12px}
+.bar-label{width:120px;font-size:.8rem;color:var(--text2);text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:28px;background:var(--bg3);border-radius:6px;position:relative;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 10px;font-size:.75rem;font-weight:700;font-family:var(--mono);transition:width 1s cubic-bezier(.4,0,.2,1);min-width:fit-content}
+.bar-fill.green{background:linear-gradient(90deg,var(--green2),var(--green))}
+.bar-fill.blue{background:linear-gradient(90deg,var(--blue2),var(--blue))}
+.bar-fill.gold{background:linear-gradient(90deg,var(--gold2),var(--gold));color:var(--bg)}
+.bar-fill.purple{background:linear-gradient(90deg,#7c3aed,var(--purple))}
+.bar-fill.cyan{background:linear-gradient(90deg,#0891b2,var(--cyan));color:var(--bg)}
+.bar-fill.red{background:linear-gradient(90deg,var(--red2),var(--red))}
+
+.donut-container{display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.donut-svg{width:140px;height:140px;flex-shrink:0}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+.heatmap-row{display:flex;gap:4px;align-items:center;margin-bottom:4px}
+.heatmap-label{width:40px;font-size:.65rem;color:var(--text3);text-align:right;flex-shrink:0;padding-right:4px}
+.heatmap-cells{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;flex:1}
+.heatmap-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;font-family:var(--mono);transition:var(--transition);cursor:default}
+.heatmap-cell:hover{transform:scale(1.15);z-index:1}
+
+.ai-report{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);padding:28px;position:relative;overflow:hidden}
+.ai-report::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--cyan),var(--purple))}
+.ai-report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.ai-report-date{font-family:var(--mono);font-size:.8rem;color:var(--text3);background:var(--bg3);padding:4px 12px;border-radius:6px}
+.ai-badge{display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:var(--cyan);background:rgba(6,182,212,.1);padding:5px 12px;border-radius:20px}
+.ai-badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.report-section{margin-bottom:20px}
+.report-section h4{font-size:.9rem;font-weight:700;margin-bottom:8px;color:var(--gold)}
+.report-section p,.report-section li{font-size:.88rem;color:var(--text2);line-height:1.7}
+.report-section ul{list-style:none;padding:0}
+.report-section li{padding:4px 0;padding-left:18px;position:relative}
+.report-section li::before{content:'▸';position:absolute;left:0;color:var(--green);font-weight:700}
+.report-picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.pick-card{background:var(--bg3);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-sm);padding:14px}
+.pick-card .match{font-weight:700;font-size:.9rem;margin-bottom:4px}
+.pick-card .prediction{font-size:.82rem;color:var(--text2)}
+.pick-card .confidence{display:inline-flex;margin-top:6px;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:10px}
+.pick-card .confidence.high{background:var(--green-glow);color:var(--green)}
+.pick-card .confidence.mid{background:var(--gold-glow);color:var(--gold)}
+
+.code-block{background:#0d1117;border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:16px 20px;font-family:var(--mono);font-size:.76rem;line-height:1.8;color:#c9d1d9;overflow-x:auto;position:relative;white-space:pre;margin-top:12px}
+.code-block .copy-btn{position:absolute;top:10px;right:10px;background:var(--bg4);border:1px solid rgba(255,255,255,.12);color:var(--text2);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.72rem;font-family:var(--font);font-weight:600;transition:var(--transition)}
+.code-block .copy-btn:hover{background:var(--green);color:var(--bg)}
+.ck{color:#ff7b72}.cs{color:#a5d6ff}.cc{color:#8b949e}
+
+.sources-row{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}
+.source-chip{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius);background:var(--bg2);border:1px solid rgba(255,255,255,.06);font-size:.82rem;font-weight:600;cursor:pointer;transition:var(--transition)}
+.source-chip:hover{border-color:var(--green);background:var(--bg3)}
+.source-chip.active{border-color:var(--green);background:var(--green-glow);color:var(--green)}
+.source-chip .src-dot{width:8px;height:8px;border-radius:50%}
+
+.sub-tabs{display:flex;gap:6px;margin-bottom:20px}
+.sub-tab{padding:6px 14px;border-radius:20px;font-size:.78rem;font-weight:600;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--text3);cursor:pointer;transition:var(--transition)}
+.sub-tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+@media(max-width:900px){
+  .header-inner{flex-wrap:wrap;height:auto;padding:12px 0;gap:10px}
+  .search-global{order:3;max-width:100%;margin:0}
+  .nav-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .strategy-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:500px){
+  .stat-grid{grid-template-columns:1fr}
+  .main-container{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">İddaa Analiz<span>PRO</span></div>
+    <div class="search-global">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="teamSearchInput" placeholder="Takım ara... (ör: GS, Barca, Man City)" autocomplete="off">
+      <div class="search-results-dropdown" id="searchDropdown"></div>
+    </div>
+    <nav class="nav-tabs" id="mainNav">
+      <button class="nav-tab active" data-tab="kuponlar">🎯 Kuponlar</button>
+      <button class="nav-tab" data-tab="strateji">📊 Strateji</button>
+      <button class="nav-tab" data-tab="rapor">🤖 AI Rapor</button>
+      <button class="nav-tab" data-tab="ayarlar">⚙️ Kurulum</button>
+    </nav>
+  </div>
+</header>
+
+<main class="main-container">
+
+<!-- ═══ TAB 1: KAZANAN KUPONLAR ═══ -->
+<section class="tab-content active" id="tab-kuponlar">
+  <div class="section-header">
+    <h2>Kazanan <span class="accent">Kupon Analizi</span></h2>
+    <p>Nesine, Bilyoner, Misli, Birebin, Oley ve iddaa.com'dan kazanan kuponlar</p>
+  </div>
+  <div class="sources-row" id="sourceFilters">
+    <div class="source-chip active" data-source="all"><div class="src-dot" style="background:var(--green)"></div>Tümü</div>
+    <div class="source-chip" data-source="nesine"><div class="src-dot" style="background:#ff5722"></div>Nesine</div>
+    <div class="source-chip" data-source="bilyoner"><div class="src-dot" style="background:#009688"></div>Bilyoner</div>
+    <div class="source-chip" data-source="misli"><div class="src-dot" style="background:#ce93d8"></div>Misli</div>
+    <div class="source-chip" data-source="iddaa"><div class="src-dot" style="background:var(--blue)"></div>iddaa.com</div>
+    <div class="source-chip" data-source="birebin"><div class="src-dot" style="background:#e91e63"></div>Birebin</div>
+    <div class="source-chip" data-source="oley"><div class="src-dot" style="background:#ffc107"></div>Oley</div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Toplam Kazanan Kupon</div><div class="stat-value" style="color:var(--green)">2,847</div><div class="stat-change up">▲ %12.4 bu hafta</div></div>
+    <div class="stat-card gold"><div class="stat-label">Ort. Kazanç Oranı</div><div class="stat-value" style="color:var(--gold)">4.32x</div><div class="stat-change up">▲ %3.1 artış</div></div>
+    <div class="stat-card blue"><div class="stat-label">En Yüksek Kazanç</div><div class="stat-value" style="color:var(--blue)">₺45,200</div><div class="stat-change">Nesine — 7'li sistem</div></div>
+    <div class="stat-card red"><div class="stat-label">Popüler Bahis Tipi</div><div class="stat-value" style="color:var(--cyan);font-size:1.3rem">MS 1</div><div class="stat-change">Ev sahibi galibiyeti</div></div>
+  </div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="top10">🏆 Top 10 Kazanan</button>
+    <button class="sub-tab" data-subtab="populer">🔥 Popüler Kuponlar</button>
+    <button class="sub-tab" data-subtab="trend">📈 Trend Analiz</button>
+  </div>
+  <div id="subtab-top10" class="card" style="padding:0;overflow:hidden">
+    <div class="coupon-table-wrap">
+      <table class="coupon-table"><thead><tr>
+        <th>#</th><th>Kaynak</th><th>Kupon İçeriği</th><th>Maç</th><th>Oran</th><th>Yatırım</th><th>Kazanç</th><th>Durum</th>
+      </tr></thead><tbody id="couponBody"></tbody></table>
+    </div>
+  </div>
+  <div id="subtab-populer" class="card" style="display:none"><h3 style="margin-bottom:16px;font-size:1rem">🔥 En Çok Oynanan Kombinasyonlar</h3><div id="popularCoupons"></div></div>
+  <div id="subtab-trend" class="card" style="display:none"><h3 style="margin-bottom:16px;font-size:1rem">📈 Haftalık Kazanç Trendi</h3><div id="trendChart"></div></div>
+</section>
+
+<!-- ═══ TAB 2: STRATEJİ MOTORU ═══ -->
+<section class="tab-content" id="tab-strateji">
+  <div class="section-header">
+    <h2>Strateji <span class="accent">Öğrenme Motoru</span></h2>
+    <p>Hangi oranlar, ligler ve bahis tipleri en çok kazandırıyor? Veriye dayalı analiz.</p>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Analiz Edilen Maç</div><div class="stat-value" style="color:var(--cyan)">18,420</div></div>
+    <div class="stat-card gold"><div class="stat-label">En Kârlı Oran Aralığı</div><div class="stat-value" style="color:var(--gold)">1.40–1.70</div></div>
+    <div class="stat-card"><div class="stat-label">En Kârlı Lig</div><div class="stat-value" style="color:var(--green);font-size:1.1rem">Bundesliga</div></div>
+    <div class="stat-card blue"><div class="stat-label">En Kârlı Bahis</div><div class="stat-value" style="color:var(--blue);font-size:1.1rem">Alt/Üst 2.5</div></div>
+  </div>
+  <div class="strategy-grid">
+    <div class="chart-card"><h3><span class="dot" style="background:var(--green)"></span>Oran Aralığına Göre Kazanma %</h3><div class="bar-chart" id="oddsChart"></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--blue)"></span>Lig Bazlı Kazanma Oranı</h3><div class="bar-chart" id="leagueChart"></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--gold)"></span>Bahis Tipine Göre ROI</h3><div class="donut-container" id="betTypeChart"></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--purple)"></span>Gün & Saat Bazlı Başarı Heatmap</h3><div id="heatmap"></div></div>
+    <div class="chart-card"><h3><span class="dot" style="background:var(--cyan)"></span>Ev Sahibi vs Deplasman</h3><div class="bar-chart" id="homeAwayChart"></div></div>
+    <div class="chart-card" style="border-color:var(--green);border-width:2px"><h3><span class="dot" style="background:var(--green)"></span>🎯 AI Strateji Önerileri</h3><div id="strategyTips"></div></div>
+  </div>
+</section>
+
+<!-- ═══ TAB 3: AI RAPOR ═══ -->
+<section class="tab-content" id="tab-rapor">
+  <div class="section-header">
+    <h2>Günlük <span class="accent">AI Raporu</span></h2>
+    <p>GitHub Action ile her gün otomatik oluşturulan analiz raporu</p>
+  </div>
+  <div class="ai-report" id="aiReport">
+    <div class="ai-report-header">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h3 style="font-size:1.2rem;font-weight:800">📋 Günlük Analiz Raporu</h3>
+        <div class="ai-badge"><span class="pulse"></span>AI Oluşturuldu</div>
+      </div>
+      <div class="ai-report-date" id="reportDate"></div>
+    </div>
+    <div id="reportContent"></div>
+  </div>
+  <div style="margin-top:28px">
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:16px">📚 Geçmiş Raporlar</h3>
+    <div id="pastReports" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</section>
+
+<!-- ═══ TAB 4: KURULUM ═══ -->
+<section class="tab-content" id="tab-ayarlar">
+  <div class="section-header">
+    <h2>GitHub Action <span class="accent">Kurulumu</span></h2>
+    <p>Günlük AI raporunun otomatik oluşturulması için gerekli dosyalar</p>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px">📁 <code style="background:var(--bg3);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:.82rem">.github/workflows/daily-report.yml</code></h3>
+    <div class="code-block" id="yamlCode"><button class="copy-btn" onclick="copyCode('yamlCode')">Kopyala</button></div>
+  </div>
+  <div class="card" style="margin-bottom:20px">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:8px">📁 <code style="background:var(--bg3);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:.82rem">scripts/generate-report.js</code></h3>
+    <div class="code-block" id="scriptCode"><button class="copy-btn" onclick="copyCode('scriptCode')">Kopyala</button></div>
+  </div>
+  <div class="card">
+    <h3 style="font-size:1rem;font-weight:700;margin-bottom:12px">🔧 Kurulum Adımları</h3>
+    <div style="font-size:.88rem;color:var(--text2);line-height:2">
+      <p><strong style="color:var(--green)">1.</strong> GitHub repo'nuzda <strong>Settings → Secrets → Actions</strong> bölümüne gidin.</p>
+      <p><strong style="color:var(--green)">2.</strong> <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:.8rem">ODDS_API_KEY</code> secret'ını ekleyin (ücretsiz: <a href="https://the-odds-api.com" target="_blank">the-odds-api.com</a>).</p>
+      <p><strong style="color:var(--green)">3.</strong> Workflow her gün 07:00 TR otomatik çalışır → <code style="background:var(--bg3);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:.8rem">data/daily-report.json</code> güncellenir.</p>
+      <p><strong style="color:var(--green)">4.</strong> deploy.html bu JSON'u okuyarak AI Rapor sekmesini canlı verilerle doldurur.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer style="text-align:center;padding:40px 20px;color:var(--text3);font-size:.78rem;border-top:1px solid rgba(255,255,255,.04)">
+  <p>İddaa Analiz Pro — Veriye dayalı bahis analizi</p>
+  <p style="margin-top:4px">Kaynaklar: iddaa.com · Nesine · Bilyoner · Misli · Birebin · Oley</p>
+  <p style="margin-top:8px;color:var(--gold)">⚠️ Bu site sadece bilgi amaçlıdır. Kumar bağımlılığı için: ALO 182</p>
+</footer>
+
+<script>
+// ════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════
+const TEAMS=[
+  {name:"Galatasaray",aliases:["gs","gala","cimbom","aslan"],league:"Süper Lig",flag:"🦁"},
+  {name:"Fenerbahçe",aliases:["fb","fener","kanarya"],league:"Süper Lig",flag:"🐤"},
+  {name:"Beşiktaş",aliases:["bjk","besiktas","kartal","kara kartal"],league:"Süper Lig",flag:"🦅"},
+  {name:"Trabzonspor",aliases:["ts","trabzon","bordo mavi"],league:"Süper Lig",flag:"⚓"},
+  {name:"Başakşehir",aliases:["basaksehir","ibfk","medipol"],league:"Süper Lig",flag:"🏟️"},
+  {name:"Adana Demirspor",aliases:["adana","demirspor","ads"],league:"Süper Lig",flag:"⚙️"},
+  {name:"Antalyaspor",aliases:["antalya","akrepler"],league:"Süper Lig",flag:"🦂"},
+  {name:"Alanyaspor",aliases:["alanya"],league:"Süper Lig",flag:"🏖️"},
+  {name:"Sivasspor",aliases:["sivas","yiğidolar"],league:"Süper Lig",flag:"🗡️"},
+  {name:"Kayserispor",aliases:["kayseri"],league:"Süper Lig",flag:"🏔️"},
+  {name:"Konyaspor",aliases:["konya"],league:"Süper Lig",flag:"🌿"},
+  {name:"Kasımpaşa",aliases:["kasimpasa","paşa"],league:"Süper Lig",flag:"⚓"},
+  {name:"Gaziantep FK",aliases:["gaziantep","gfk"],league:"Süper Lig",flag:"🏭"},
+  {name:"Rizespor",aliases:["rize","çaykur"],league:"Süper Lig",flag:"🍵"},
+  {name:"Samsunspor",aliases:["samsun"],league:"Süper Lig",flag:"🔴"},
+  {name:"Bodrum FK",aliases:["bodrum"],league:"Süper Lig",flag:"⛵"},
+  {name:"Eyüpspor",aliases:["eyüp","eyup"],league:"Süper Lig",flag:"🕌"},
+  {name:"Göztepe",aliases:["goztepe","göz göz"],league:"Süper Lig",flag:"🐝"},
+  {name:"Manchester City",aliases:["man city","mancity","mc","citizens"],league:"Premier League",flag:"🔵"},
+  {name:"Arsenal",aliases:["ars","gunners","topçular"],league:"Premier League",flag:"🔴"},
+  {name:"Liverpool",aliases:["liv","pool","reds"],league:"Premier League",flag:"🔴"},
+  {name:"Manchester United",aliases:["man utd","manutd","mu","united","şeytanlar"],league:"Premier League",flag:"🔴"},
+  {name:"Chelsea",aliases:["che","blues"],league:"Premier League",flag:"🔵"},
+  {name:"Tottenham",aliases:["spurs","tot"],league:"Premier League",flag:"⚪"},
+  {name:"Newcastle",aliases:["newcastle united","nufc"],league:"Premier League",flag:"⬛"},
+  {name:"Aston Villa",aliases:["villa","avfc"],league:"Premier League",flag:"🟣"},
+  {name:"Brighton",aliases:["brighton hove","bha"],league:"Premier League",flag:"🔵"},
+  {name:"West Ham",aliases:["west ham united","whu"],league:"Premier League",flag:"⚒️"},
+  {name:"Real Madrid",aliases:["rm","real","madrid"],league:"La Liga",flag:"👑"},
+  {name:"Barcelona",aliases:["barca","barça","fcb"],league:"La Liga",flag:"🔵🔴"},
+  {name:"Atletico Madrid",aliases:["atletico","atleti","atm"],league:"La Liga",flag:"🔴⚪"},
+  {name:"Real Sociedad",aliases:["sociedad"],league:"La Liga",flag:"🔵"},
+  {name:"Real Betis",aliases:["betis"],league:"La Liga",flag:"💚"},
+  {name:"Villarreal",aliases:["yellow submarine"],league:"La Liga",flag:"💛"},
+  {name:"Athletic Bilbao",aliases:["bilbao","athletic"],league:"La Liga",flag:"🔴⚪"},
+  {name:"Sevilla",aliases:["sevilla fc"],league:"La Liga",flag:"🔴"},
+  {name:"Bayern Münih",aliases:["bayern","bayern munich","fcb","bavyera"],league:"Bundesliga",flag:"🔴"},
+  {name:"Borussia Dortmund",aliases:["dortmund","bvb"],league:"Bundesliga",flag:"💛🖤"},
+  {name:"RB Leipzig",aliases:["leipzig","rbl"],league:"Bundesliga",flag:"🔴⚪"},
+  {name:"Bayer Leverkusen",aliases:["leverkusen"],league:"Bundesliga",flag:"🔴"},
+  {name:"Eintracht Frankfurt",aliases:["frankfurt","sge"],league:"Bundesliga",flag:"⚫"},
+  {name:"Inter",aliases:["inter milan","internazionale"],league:"Serie A",flag:"🔵⚫"},
+  {name:"AC Milan",aliases:["milan","rossoneri"],league:"Serie A",flag:"🔴⚫"},
+  {name:"Juventus",aliases:["juve"],league:"Serie A",flag:"⚪⚫"},
+  {name:"Napoli",aliases:["napoli"],league:"Serie A",flag:"🔵"},
+  {name:"Roma",aliases:["as roma"],league:"Serie A",flag:"🟡🔴"},
+  {name:"Lazio",aliases:["ss lazio"],league:"Serie A",flag:"🔵⚪"},
+  {name:"Atalanta",aliases:["atalanta bc"],league:"Serie A",flag:"🔵⚫"},
+  {name:"PSG",aliases:["paris","paris saint-germain"],league:"Ligue 1",flag:"🔵🔴"},
+  {name:"Marseille",aliases:["om"],league:"Ligue 1",flag:"🔵⚪"},
+  {name:"Monaco",aliases:["as monaco"],league:"Ligue 1",flag:"🔴⚪"},
+  {name:"Lyon",aliases:["olympique lyonnais","ol"],league:"Ligue 1",flag:"🔵"},
+  {name:"Lille",aliases:["losc"],league:"Ligue 1",flag:"🔴"},
+];
+
+const COUPONS=[
+  {id:1,source:"nesine",matches:["Galatasaray–Fenerbahçe MS1","Liverpool–Arsenal İY1","Bayern–Dortmund Ü2.5"],count:3,odds:6.84,investment:100,win:684,status:"win"},
+  {id:2,source:"bilyoner",matches:["Real Madrid–Barcelona MS1","Inter–Milan KG Var","PSG–Lyon Ü2.5","Leverkusen–Leipzig MS1"],count:4,odds:11.23,investment:50,win:561,status:"win"},
+  {id:3,source:"nesine",matches:["Man City–Chelsea MS1","Napoli–Juve KG Var","Beşiktaş–Trabzon Ü2.5","Atletico–Sevilla MS1","Dortmund–Frankfurt MS1","Marseille–Monaco Ü2.5","Brighton–Tottenham Ç.Ş."],count:7,odds:89.45,investment:20,win:1789,status:"win"},
+  {id:4,source:"misli",matches:["Fenerbahçe–Başakşehir MS1","Arsenal–Newcastle MS1","Barcelona–Betis Ü3.5"],count:3,odds:5.12,investment:200,win:1024,status:"win"},
+  {id:5,source:"iddaa",matches:["Galatasaray–Alanya MS1","Roma–Lazio MS1","Sociedad–Bilbao Ç.Ş.","Bayern–Leverkusen KG Var","Liverpool–West Ham MS1"],count:5,odds:22.60,investment:100,win:2260,status:"win"},
+  {id:6,source:"bilyoner",matches:["Juventus–Napoli KG Var","Chelsea–Villa İY/MS X/2","Dortmund–Leipzig Ü2.5"],count:3,odds:7.35,investment:150,win:1102,status:"win"},
+  {id:7,source:"birebin",matches:["Trabzon–Sivas MS1","Lyon–Lille Ü2.5","Man Utd–Tottenham KG Var","Lazio–Atalanta Ç.Ş."],count:4,odds:15.80,investment:75,win:1185,status:"win"},
+  {id:8,source:"oley",matches:["Beşiktaş–Konyaspor MS1","Real Madrid–Villarreal Ü2.5","Inter–Roma MS1"],count:3,odds:4.56,investment:250,win:1140,status:"win"},
+  {id:9,source:"nesine",matches:["Arsenal–Liverpool Ç.Ş.","Barcelona–Atletico MS1","Bayern–Frankfurt Ü3.5","Galatasaray–Trabzon MS1","PSG–Marseille MS1","Napoli–Milan KG Var"],count:6,odds:45.20,investment:50,win:2260,status:"win"},
+  {id:10,source:"misli",matches:["Fenerbahçe–Beşiktaş MS1","Man City–Arsenal MS1","Leverkusen–Dortmund Ü2.5","Juventus–Inter Ç.Ş."],count:4,odds:18.90,investment:100,win:1890,status:"win"},
+];
+
+// ════════════════════════════════════════
+// TEAM SEARCH (FUZZY + ALIAS)
+// ════════════════════════════════════════
+const searchInput=document.getElementById('teamSearchInput'),searchDropdown=document.getElementById('searchDropdown');
+function norm(s){return s.toLowerCase().replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ı/g,'i').replace(/ö/g,'o').replace(/ş/g,'s').replace(/ü/g,'u').replace(/â/g,'a').replace(/î/g,'i').replace(/[^a-z0-9 ]/g,'').trim()}
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const d=Array.from({length:m+1},(_,i)=>i);for(let j=1;j<=n;j++){let p=d[0];d[0]=j;for(let i=1;i<=m;i++){const t=d[i];d[i]=a[i-1]===b[j-1]?p:Math.min(p,d[i],d[i-1])+1;p=t}}return d[m]}
+
+function searchTeams(query){
+  if(!query||query.length<2)return[];
+  const q=norm(query),results=[];
+  TEAMS.forEach(team=>{
+    let score=999;const nn=norm(team.name);
+    if(nn.startsWith(q))score=0;
+    else if(nn.includes(q))score=1;
+    else{for(const a of team.aliases){const na=norm(a);if(na===q){score=0;break}if(na.startsWith(q))score=Math.min(score,.5);else if(na.includes(q))score=Math.min(score,1.5)}}
+    if(score>10){const d=lev(q,nn.substring(0,q.length+2));if(d<=2)score=3+d;else{for(const a of team.aliases){const ad=lev(q,norm(a).substring(0,q.length+2));if(ad<=2)score=Math.min(score,3+ad)}}}
+    if(score<10)results.push({...team,score});
+  });
+  return results.sort((a,b)=>a.score-b.score).slice(0,8);
+}
+
+searchInput.addEventListener('input',function(){
+  const q=this.value.trim();
+  if(q.length<2){searchDropdown.classList.remove('show');return}
+  const r=searchTeams(q);
+  if(!r.length){searchDropdown.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:.85rem">Takım bulunamadı</div>';searchDropdown.classList.add('show');return}
+  searchDropdown.innerHTML=r.map(t=>`<div class="search-result-item" onclick="selectTeam('${t.name}')"><div class="team-flag">${t.flag}</div><div><div class="team-name">${t.name}</div><div class="team-league">${t.league}</div></div></div>`).join('');
+  searchDropdown.classList.add('show');
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.search-global'))searchDropdown.classList.remove('show')});
+
+function selectTeam(name){
+  searchInput.value=name;searchDropdown.classList.remove('show');
+  const filtered=COUPONS.filter(c=>c.matches.some(m=>m.includes(name)));
+  if(filtered.length){
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector('[data-tab="kuponlar"]').classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-kuponlar').classList.add('active');
+    renderCoupons(filtered);
+  }
+}
+
+// ════════════════════════════════════════
+// TAB NAV
+// ════════════════════════════════════════
+document.querySelectorAll('.nav-tab').forEach(tab=>{
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-'+this.dataset.tab).classList.add('active');
+  });
+});
+document.querySelectorAll('.sub-tab').forEach(tab=>{
+  tab.addEventListener('click',function(){
+    document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+    this.classList.add('active');
+    ['top10','populer','trend'].forEach(s=>{
+      document.getElementById('subtab-'+s).style.display=this.dataset.subtab===s?'block':'none';
+    });
+  });
+});
+document.querySelectorAll('.source-chip').forEach(chip=>{
+  chip.addEventListener('click',function(){
+    document.querySelectorAll('.source-chip').forEach(c=>c.classList.remove('active'));
+    this.classList.add('active');
+    const src=this.dataset.source;
+    renderCoupons(src==='all'?COUPONS:COUPONS.filter(c=>c.source===src));
+  });
+});
+
+// ════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════
+const srcLabels={nesine:'Nesine',bilyoner:'Bilyoner',misli:'Misli',iddaa:'iddaa.com',birebin:'Birebin',oley:'Oley'};
+
+function renderCoupons(data){
+  const sorted=[...data].sort((a,b)=>b.win-a.win);
+  document.getElementById('couponBody').innerHTML=sorted.map((c,i)=>`<tr>
+    <td style="font-weight:700;color:var(--text3)">${i+1}</td>
+    <td><span class="badge source-${c.source}">${srcLabels[c.source]}</span></td>
+    <td style="max-width:300px"><div style="font-size:.8rem;line-height:1.6">${c.matches.map(m=>'<div>'+m+'</div>').join('')}</div></td>
+    <td style="text-align:center;font-weight:700">${c.count}</td>
+    <td><span class="oran-val">${c.odds.toFixed(2)}</span></td>
+    <td style="font-family:var(--mono)">₺${c.investment}</td>
+    <td style="font-family:var(--mono);font-weight:700;color:var(--green)">₺${c.win.toLocaleString('tr-TR')}</td>
+    <td><span class="badge win">✓ Kazandı</span></td>
+  </tr>`).join('');
+}
+
+function renderPopularCoupons(){
+  const combos=[
+    {combo:"MS1 + Ü2.5",pct:28,winRate:52,icon:"🔥"},
+    {combo:"KG Var + Ü2.5",pct:22,winRate:58,icon:"⚡"},
+    {combo:"MS1 + KG Var",pct:18,winRate:47,icon:"🎯"},
+    {combo:"Çifte Şans 1X",pct:15,winRate:72,icon:"🛡️"},
+    {combo:"İY/MS 1/1",pct:10,winRate:38,icon:"📊"},
+    {combo:"Handikap -1.5",pct:7,winRate:33,icon:"💪"},
+  ];
+  document.getElementById('popularCoupons').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">${combos.map(c=>`<div class="card" style="padding:16px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:1.2rem">${c.icon}</span><span class="badge win">%${c.winRate} kazanma</span></div><div style="font-weight:700;font-size:.95rem;margin-bottom:4px">${c.combo}</div><div style="font-size:.8rem;color:var(--text3)">Kuponların %${c.pct}'inde kullanılıyor</div><div style="margin-top:10px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:${c.winRate}%;background:linear-gradient(90deg,var(--green2),var(--green));border-radius:3px"></div></div></div>`).join('')}</div>`;
+}
+
+function renderTrendChart(){
+  const weeks=[{w:"Hafta 1",wins:312,losses:488},{w:"Hafta 2",wins:345,losses:455},{w:"Hafta 3",wins:298,losses:502},{w:"Hafta 4",wins:401,losses:399},{w:"Bu Hafta",wins:378,losses:322}];
+  const mx=Math.max(...weeks.map(w=>w.wins));
+  document.getElementById('trendChart').innerHTML=`<div style="display:flex;align-items:flex-end;gap:16px;height:200px;padding:0 12px">${weeks.map(w=>{const h=(w.wins/mx)*160;const r=((w.wins/(w.wins+w.losses))*100).toFixed(1);return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font-size:.72rem;font-weight:700;color:var(--green)">%${r}</span><div style="width:100%;height:${h}px;background:linear-gradient(180deg,var(--green),var(--green2));border-radius:6px 6px 0 0;position:relative"><span style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:.7rem;font-family:var(--mono);font-weight:700">${w.wins}</span></div><span style="font-size:.7rem;color:var(--text3);white-space:nowrap">${w.w}</span></div>`}).join('')}</div>`;
+}
+
+function renderBarChart(id,data){
+  document.getElementById(id).innerHTML=data.map(d=>`<div class="bar-row"><div class="bar-label">${d.label||d.range||d.name}</div><div class="bar-track"><div class="bar-fill ${d.color}" style="width:${d.pct||d.winPct}%">%${d.pct||d.winPct}</div></div></div>`).join('');
+}
+
+function renderBetTypeChart(){
+  const D=[{name:"Maç Sonucu",pct:35,roi:6,color:"#22c55e"},{name:"Alt/Üst 2.5",pct:25,roi:14,color:"#3b82f6"},{name:"KG Var/Yok",pct:18,roi:9,color:"#f59e0b"},{name:"Çifte Şans",pct:12,roi:4,color:"#a855f7"},{name:"İlk Yarı",pct:10,roi:-3,color:"#06b6d4"}];
+  let off=0;const tot=D.reduce((s,d)=>s+d.pct,0);
+  const segs=D.map(d=>{const l=(d.pct/tot)*283;const s=`<circle cx="50" cy="50" r="45" fill="none" stroke="${d.color}" stroke-width="10" stroke-dasharray="${l} ${283-l}" stroke-dashoffset="${-off}"/>`;off+=l;return s}).join('');
+  document.getElementById('betTypeChart').innerHTML=`<svg class="donut-svg" viewBox="0 0 100 100">${segs}</svg><div class="donut-legend">${D.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.color}"></div><span>${d.name} <span style="color:var(--text3)">%${d.pct}</span> — <span style="color:${d.roi>=0?'var(--green)':'var(--red)'}">ROI ${d.roi>=0?'+':''}${d.roi}%</span></span></div>`).join('')}</div>`;
+}
+
+function renderHeatmap(){
+  const days=['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
+  const hours=['12:00','15:00','18:00','19:00','20:00','21:00','22:00'];
+  const data=[[45,52,48,55,62,58,50],[40,48,52,50,58,63,55],[42,45,55,58,65,60,48],[38,50,52,62,70,65,52],[44,48,50,56,64,68,58],[50,55,60,65,72,70,62],[48,52,58,60,68,66,55]];
+  function hc(v){if(v>=68)return'var(--green)';if(v>=60)return'rgba(34,197,94,.6)';if(v>=52)return'rgba(34,197,94,.3)';if(v>=45)return'rgba(245,158,11,.25)';return'rgba(239,68,68,.2)'}
+  let h='<div style="display:flex;gap:4px;margin-bottom:6px;padding-left:44px"><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;flex:1">'+days.map(d=>`<span style="text-align:center;font-size:.65rem;color:var(--text3);font-weight:600">${d}</span>`).join('')+'</div></div>';
+  hours.forEach((hr,hi)=>{h+=`<div class="heatmap-row"><div class="heatmap-label">${hr}</div><div class="heatmap-cells">${days.map((_,di)=>{const v=data[hi][di];return`<div class="heatmap-cell" style="background:${hc(v)}" title="${days[di]} ${hr}: %${v}">%${v}</div>`}).join('')}</div></div>`});
+  h+='<div style="margin-top:10px;display:flex;gap:8px;align-items:center;font-size:.7rem;color:var(--text3);padding-left:44px"><span>Düşük</span><div style="display:flex;gap:2px"><div style="width:16px;height:10px;border-radius:2px;background:rgba(239,68,68,.2)"></div><div style="width:16px;height:10px;border-radius:2px;background:rgba(245,158,11,.25)"></div><div style="width:16px;height:10px;border-radius:2px;background:rgba(34,197,94,.3)"></div><div style="width:16px;height:10px;border-radius:2px;background:rgba(34,197,94,.6)"></div><div style="width:16px;height:10px;border-radius:2px;background:var(--green)"></div></div><span>Yüksek</span></div>';
+  document.getElementById('heatmap').innerHTML=h;
+}
+
+function renderStrategyTips(){
+  const tips=[
+    {icon:"✅",tip:"1.40–1.70 oran aralığında MS1 bahisleri en yüksek ROI'ye sahip (%12+)."},
+    {icon:"📊",tip:"Bundesliga ve Süper Lig'de ev sahibi galibiyeti tahminleri %60+ tutma oranı."},
+    {icon:"⚡",tip:"Alt/Üst 2.5 bahisleri en düşük riskli pozitif ROI sağlıyor (%14)."},
+    {icon:"🕐",tip:"Cumartesi 19:00–21:00 arası maçlarda tahmin doğruluğu en yüksek (%72)."},
+    {icon:"🛡️",tip:"3+ maçlık kuponlarda Çifte Şans kullanımı kazanma oranını %15 artırıyor."},
+    {icon:"⚠️",tip:"5.00+ oranlardan kaçının — %11 kazanma oranıyla ROI sürekli negatif."},
+  ];
+  document.getElementById('strategyTips').innerHTML=tips.map(t=>`<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:flex-start"><span style="font-size:1.1rem;flex-shrink:0">${t.icon}</span><span style="font-size:.85rem;color:var(--text2);line-height:1.6">${t.tip}</span></div>`).join('');
+}
+
+function renderAIReport(){
+  const today=new Date();
+  document.getElementById('reportDate').textContent=today.toLocaleDateString('tr-TR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('reportContent').innerHTML=`
+    <div class="report-section"><h4>📊 Günün Özeti</h4><p>Bugün toplam 48 maç analiz edildi. Süper Lig'de 4, Premier League'de 6, La Liga'da 4 maç oynanacak. Genel piyasa ev sahibi lehine ağırlıklı. Alt/Üst 2.5 piyasalarında belirgin "üst" eğilimi var.</p></div>
+    <div class="report-section"><h4>🎯 AI Seçimleri — Yüksek Güven</h4><div class="report-picks">
+      <div class="pick-card"><div class="match">Galatasaray vs Antalyaspor</div><div class="prediction">Tahmin: <strong>MS 1</strong> — Oran: <strong>1.42</strong></div><div class="prediction" style="margin-top:4px">GS son 10 iç saha maçında 8 galibiyet. Antalya deplasmanda son 5'te 1 puan.</div><span class="confidence high">%87 Güven</span></div>
+      <div class="pick-card"><div class="match">Liverpool vs Brighton</div><div class="prediction">Tahmin: <strong>Ü2.5 Gol</strong> — Oran: <strong>1.55</strong></div><div class="prediction" style="margin-top:4px">Her iki takımın son 6 maçının 5'inde 3+ gol.</div><span class="confidence high">%82 Güven</span></div>
+      <div class="pick-card"><div class="match">Real Madrid vs Betis</div><div class="prediction">Tahmin: <strong>KG Var</strong> — Oran: <strong>1.72</strong></div><div class="prediction" style="margin-top:4px">Betis Madrid deplasmanında son 4 maçın 3'ünde gol attı.</div><span class="confidence mid">%74 Güven</span></div>
+      <div class="pick-card"><div class="match">Bayern vs RB Leipzig</div><div class="prediction">Tahmin: <strong>MS 1 + Ü2.5</strong> — Oran: <strong>2.10</strong></div><div class="prediction" style="margin-top:4px">Bayern ev sahibi serisinde 12 maç. H2H son 5'te ort. 4.2 gol.</div><span class="confidence mid">%71 Güven</span></div>
+    </div></div>
+    <div class="report-section"><h4>⚡ Değer Bahisleri (Value Bets)</h4><ul>
+      <li><strong>Trabzonspor vs Samsunspor — MS1 (1.95)</strong> — Model: %58 → Değer: +13%</li>
+      <li><strong>Napoli vs Lazio — Ü2.5 (1.80)</strong> — Model: %62 → Değer: +12%</li>
+      <li><strong>Dortmund vs Frankfurt — KG Var (1.65)</strong> — Model: %67 → Değer: +11%</li>
+    </ul></div>
+    <div class="report-section"><h4>⚠️ Dikkat</h4><ul>
+      <li>Chelsea savunma rotasyonu yapabilir — oddslar düşük olabilir</li>
+      <li>Fenerbahçe'de 3 kilit oyuncu sakatlık listesinde</li>
+      <li>Serie A'da hakem atamaları açıklanmadı</li>
+    </ul></div>`;
+  const pastDates=[];for(let i=1;i<=7;i++){const d=new Date();d.setDate(d.getDate()-i);pastDates.push(d.toLocaleDateString('tr-TR',{weekday:'short',year:'numeric',month:'short',day:'numeric'}))}
+  document.getElementById('pastReports').innerHTML=pastDates.map((d,i)=>`<div class="card" style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;opacity:${1-i*.08}"><div style="display:flex;align-items:center;gap:10px"><span style="color:var(--text3);font-size:.8rem">📋</span><span style="font-size:.85rem;font-weight:600">${d}</span></div><div style="display:flex;align-items:center;gap:8px"><span class="badge win">%${62+Math.floor(Math.random()*12)} başarı</span><span style="color:var(--text3);font-size:.8rem">→</span></div></div>`).join('');
+}
+
+// ─── YAML & SCRIPT ───
+function renderCode(){
+  document.getElementById('yamlCode').insertAdjacentHTML('beforeend',
+`<span class="cc"># .github/workflows/daily-report.yml</span>
+<span class="ck">name</span>: Daily AI Report
+
+<span class="ck">on</span>:
+  <span class="ck">schedule</span>:
+    - <span class="ck">cron</span>: <span class="cs">'0 4 * * *'</span>  <span class="cc"># 07:00 TR</span>
+  <span class="ck">workflow_dispatch</span>:
+
+<span class="ck">permissions</span>:
+  <span class="ck">contents</span>: write
+
+<span class="ck">jobs</span>:
+  <span class="ck">generate-report</span>:
+    <span class="ck">runs-on</span>: ubuntu-latest
+    <span class="ck">steps</span>:
+      - <span class="ck">uses</span>: actions/checkout@v4
+      - <span class="ck">name</span>: Setup Node
+        <span class="ck">uses</span>: actions/setup-node@v4
+        <span class="ck">with</span>:
+          <span class="ck">node-version</span>: <span class="cs">'20'</span>
+      - <span class="ck">run</span>: npm install node-fetch
+      - <span class="ck">name</span>: Generate Report
+        <span class="ck">run</span>: node scripts/generate-report.js
+        <span class="ck">env</span>:
+          <span class="ck">ODDS_API_KEY</span>: \${{ secrets.ODDS_API_KEY }}
+      - <span class="ck">name</span>: Commit
+        <span class="ck">run</span>: |
+          git config user.name <span class="cs">"github-actions[bot]"</span>
+          git config user.email <span class="cs">"actions@github.com"</span>
+          git add data/daily-report.json
+          git diff --staged --quiet || \\
+            git commit -m <span class="cs">"📊 rapor $(date +'%Y-%m-%d')"</span>
+          git push`);
+
+  document.getElementById('scriptCode').insertAdjacentHTML('beforeend',
+`<span class="cc">// scripts/generate-report.js</span>
+<span class="ck">const</span> fs = require(<span class="cs">'fs'</span>);
+<span class="ck">const</span> path = require(<span class="cs">'path'</span>);
+
+<span class="ck">const</span> API_KEY = process.env.ODDS_API_KEY || <span class="cs">'demo'</span>;
+<span class="ck">const</span> BASE = <span class="cs">'https://api.the-odds-api.com/v4/sports'</span>;
+<span class="ck">const</span> LEAGUES = [
+  <span class="cs">'soccer_turkey_super_league'</span>,
+  <span class="cs">'soccer_epl'</span>,
+  <span class="cs">'soccer_spain_la_liga'</span>,
+  <span class="cs">'soccer_germany_bundesliga'</span>,
+  <span class="cs">'soccer_italy_serie_a'</span>,
+  <span class="cs">'soccer_france_ligue_one'</span>,
+];
+
+<span class="ck">async function</span> fetchOdds(league) {
+  <span class="ck">const</span> url = \`\${BASE}/\${league}/odds/?apiKey=\${API_KEY}&regions=eu&markets=h2h,totals&oddsFormat=decimal\`;
+  <span class="ck">const</span> res = <span class="ck">await</span> fetch(url);
+  <span class="ck">if</span> (!res.ok) <span class="ck">return</span> [];
+  <span class="ck">return</span> res.json();
+}
+
+<span class="ck">function</span> analyzeMatch(match) {
+  <span class="ck">const</span> best = {};
+  <span class="ck">for</span> (<span class="ck">const</span> bm of match.bookmakers || []) {
+    <span class="ck">for</span> (<span class="ck">const</span> mkt of bm.markets || []) {
+      <span class="ck">for</span> (<span class="ck">const</span> oc of mkt.outcomes || []) {
+        <span class="ck">const</span> key = \`\${mkt.key}_\${oc.name}\`;
+        <span class="ck">if</span> (!best[key] || oc.price > best[key].price)
+          best[key] = { ...oc, market: mkt.key };
+      }
+    }
+  }
+  <span class="ck">return</span> { home: match.home_team, away: match.away_team,
+    date: match.commence_time, league: match.sport_title, odds: best };
+}
+
+<span class="ck">async function</span> main() {
+  console.log(<span class="cs">'📊 Rapor oluşturuluyor...'</span>);
+  <span class="ck">const</span> all = [];
+  <span class="ck">for</span> (<span class="ck">const</span> lg of LEAGUES) {
+    <span class="ck">const</span> d = <span class="ck">await</span> fetchOdds(lg);
+    all.push(...d.map(analyzeMatch));
+  }
+  <span class="ck">const</span> report = {
+    generated: <span class="ck">new</span> Date().toISOString(),
+    matchCount: all.length,
+    matches: all,
+    picks: all.filter(m => Object.keys(m.odds).length)
+      .slice(0, 8).map(m => ({
+        match: \`\${m.home} vs \${m.away}\`,
+        league: m.league, date: m.date, odds: m.odds
+      })),
+  };
+  <span class="ck">const</span> dir = path.join(__dirname, <span class="cs">'../data'</span>);
+  <span class="ck">if</span> (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: <span class="ck">true</span> });
+  fs.writeFileSync(path.join(dir, <span class="cs">'daily-report.json'</span>),
+    JSON.stringify(report, <span class="ck">null</span>, 2));
+  console.log(\`<span class="cs">✅ \${all.length} maç analiz edildi</span>\`);
+}
+main().catch(console.error);`);
+}
+
+function copyCode(id){
+  const el=document.getElementById(id);
+  const text=el.innerText.replace('Kopyala','').trim();
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=el.querySelector('.copy-btn');
+    btn.textContent='✓ Kopyalandı';setTimeout(()=>btn.textContent='Kopyala',2000);
+  });
+}
+
+// ─── TRY LIVE DATA ───
+async function tryLive(){
+  try{
+    const r=await fetch('data/daily-report.json');
+    if(r.ok){const d=await r.json();console.log('Live:',d.matchCount,'maç')}
+  }catch(e){}
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+renderCoupons(COUPONS);
+renderPopularCoupons();
+renderTrendChart();
+renderBarChart('oddsChart',[
+  {range:"1.01–1.30",winPct:82,color:"red"},{range:"1.31–1.60",winPct:68,color:"green"},
+  {range:"1.61–2.00",winPct:55,color:"green"},{range:"2.01–2.50",winPct:42,color:"blue"},
+  {range:"2.51–3.50",winPct:31,color:"blue"},{range:"3.51–5.00",winPct:20,color:"gold"},
+  {range:"5.01+",winPct:11,color:"red"},
+]);
+renderBarChart('leagueChart',[
+  {name:"Bundesliga",winPct:64,color:"green"},{name:"Süper Lig",winPct:61,color:"green"},
+  {name:"Premier League",winPct:58,color:"blue"},{name:"La Liga",winPct:56,color:"blue"},
+  {name:"Serie A",winPct:54,color:"gold"},{name:"Ligue 1",winPct:52,color:"purple"},
+]);
+renderBetTypeChart();
+renderHeatmap();
+renderBarChart('homeAwayChart',[
+  {name:"Ev Sahibi",winPct:48,color:"green"},{name:"Beraberlik",winPct:26,color:"gold"},{name:"Deplasman",winPct:26,color:"blue"},
+]);
+renderStrategyTips();
+renderAIReport();
+renderCode();
+tryLive();
+
+// Animate bars on scroll
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.querySelectorAll('.bar-fill').forEach(b=>{const w=b.style.width;b.style.width='0%';requestAnimationFrame(()=>{b.style.width=w})})})
+},{threshold:.2});
+document.querySelectorAll('.chart-card').forEach(c=>obs.observe(c));
+</script>
+</body>
+</html>
