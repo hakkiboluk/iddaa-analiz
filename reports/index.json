@@ -1,0 +1,25 @@
+[
+  {
+    "file": "report-2026-03-28.json",
+    "date": "28 Mart 2026 Cumartesi",
+    "timestamp": "2026-03-28T09:46:10.072Z",
+    "summary": {
+      "totalWins": 176,
+      "successRate": "62.9",
+      "avgROI": "13.1",
+      "topSource": "Oley",
+      "topLeague": "Süper Lig",
+      "topBetType": "KG Var/Yok",
+      "highestWin": 8406
+    },
+    "warnings": [
+      "10+ oranli kuponlarda kayip orani yüksek",
+      "Skor bahislerinde basari orani düsük"
+    ],
+    "strategies": [
+      "Cifte Sans + Alt/Üst kombinasyonu güclü",
+      "Ev sahibi galibiyeti Süper Lig de yüksek isabetle",
+      "Hafta sonu maclari daha öngörülebilir"
+    ]
+  }
+]
