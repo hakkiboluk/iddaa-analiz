@@ -1,0 +1,22 @@
+{
+  "date": "29 Mart 2026 Pazar",
+  "timestamp": "2026-03-29T09:47:25.960Z",
+  "summary": {
+    "totalWins": 279,
+    "successRate": "61.9",
+    "avgROI": "12.5",
+    "topSource": "Oley",
+    "topLeague": "Süper Lig",
+    "topBetType": "Çifte Şans",
+    "highestWin": 14684
+  },
+  "warnings": [
+    "10+ oranli kuponlarda kayip orani yüksek",
+    "Skor bahislerinde basari orani düsük"
+  ],
+  "strategies": [
+    "Cifte Sans + Alt/Üst kombinasyonu güclü",
+    "Ev sahibi galibiyeti Süper Lig de yüksek isabetle",
+    "Hafta sonu maclari daha öngörülebilir"
+  ]
+}
